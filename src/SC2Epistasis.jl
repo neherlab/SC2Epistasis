@@ -1,5 +1,5 @@
 module SC2Epistasis
 
-greet() = print("Hello World!")
+using DataFrames, LinearAlgebra, NLopt, PdbTool, BioAlignments, Statistics, Combinatorics
 
 end # module SC2Epistasis
