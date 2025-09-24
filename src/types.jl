@@ -155,6 +155,30 @@ end
 
 ##############################--------------------------------
 
+# OWL-QN structs
+
+# struct with key algorithm parameters
+mutable struct OWLQN
+    s                # param_t+1 - param_t [max size of m]
+    y                # grad_t+1 - grad_t [max size of m]
+    rho              # 1/s]i]'y[i]
+    m::Int           # L-BFGS history length 
+    t::Int           # iteration
+    lambda::Vector{Float64}  # L1 penalty
+end
+
+# constructor
+function OWLQN(x::Vector{Float64}, λ_vec::Vector{Float64})
+    s = []
+    y = []
+    rho = []
+    m = 6
+    t = 0
+    OWLQN(s, y, rho, m, t, λ_vec)
+end
+
+##############################--------------------------------
+
 # Initialization of all structs
 
 function init_all(muts::Vector{S}, delta_fit::DataFrame, clade_diff::DataFrame;
