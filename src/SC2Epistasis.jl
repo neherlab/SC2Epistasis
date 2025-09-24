@@ -1,8 +1,10 @@
 module SC2Epistasis
 
-using DataFrames, LinearAlgebra, NLopt, PdbTool, BioAlignments, Statistics, Combinatorics, JSON, CSV, HypothesisTests
+using DataFrames, LinearAlgebra, PdbTool, BioAlignments, Statistics, Combinatorics, JSON, CSV, HypothesisTests
 
 include("clade_diff.jl")
 include("types.jl")
+include("utils.jl")
+include("numerical_optim.jl")
 
 end # module SC2Epistasis
