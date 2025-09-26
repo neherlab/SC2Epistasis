@@ -1,5 +1,59 @@
 """ Utility functions for performing inference and testing """
 
+# Creates a table of epistatic interactions:
+# i --> mutated site
+# σʷᵗᵢ --> w.t. amino acid
+# σᵢ --> arrival amino acid
+# j --> interacting site
+# σⱼ --> interacting amino acid
+# J --> coupling parameter
+function epistatic_table(data::Vector{Data}, optx::Vector{OptX})
+
+    mutations = [data[m].dfit_mut.aa_mut[1] for m in eachindex(data)]
+
+    return epistatic_table(mutations, optx)
+
+end
+
+function epistatic_table(mutations::Vector{S}, optx::Vector{OptX}) where {S<:AbstractString}
+
+    epi = [optx[m].epi for m in eachindex(optx)]
+
+    epistatic_table(mutations, epi)
+
+end
+
+function epistatic_table(mutations::Vector{S}, couplings::Vector{Dict{Vector{Union{Int,String}},Float64}}) where {S<:AbstractString}
+
+    n_row = 0
+    for m in eachindex(mutations)
+        n_row += length(couplings[m])
+    end
+
+    J_tab = (σᵢ_wt=Vector{Char}(undef, n_row),
+        i=Vector{Int}(undef, n_row),
+        σᵢ=Vector{Char}(undef, n_row),
+        j=Vector{Int}(undef, n_row),
+        σⱼ=Vector{Char}(undef, n_row),
+        J=Vector{Float64}(undef, n_row))
+
+    counter = 0
+    for m in eachindex(mutations)
+        for (key, value) in couplings[m]
+            counter += 1
+            J_tab.σᵢ_wt[counter] = mutations[m][1]
+            J_tab.i[counter] = parse(Int, mutations[m][2:end-1])
+            J_tab.σᵢ[counter] = mutations[m][end]
+            J_tab.j[counter] = key[1]
+            J_tab.σⱼ[counter] = only(key[2])
+            J_tab.J[counter] = value
+        end
+    end
+
+    return DataFrame(J_tab, copycols=false)
+
+end
+
 # Read PDB files from the data folder
 function read_pdbs()
 

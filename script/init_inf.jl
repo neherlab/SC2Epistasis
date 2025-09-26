@@ -20,6 +20,3 @@ muts_prot = muts_prot[idx_sort]
 
 # Initialize structs for inference
 data, optx, qform = SC2Epistasis.init_all(muts_prot, delta_fit_prot, clade_diff_prot)
-
-# Compute distances to define regularization
-pdbs, af_pdb = SC2Epistasis.read_pdbs() # read PDB files
