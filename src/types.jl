@@ -140,7 +140,7 @@ function QForm(data::Data{S,T}, opt_x::OptX{Q,T,S}) where {Q<:Int,T<:Real,S<:Str
     w_vec = qf_coeff(data, opt_x)
 
     A = w_vec * w_vec'
-    f = w_vec * ((data.dfit_mut[:, :fit2] .- data.dfit_mut[:, :fit1]) .* sqrt.(data.weights))
+    f = -w_vec * ((data.dfit_mut[:, :fit2] .- data.dfit_mut[:, :fit1]) .* sqrt.(data.weights))
     c = offset(data.dfit_mut, data.weights)
 
     QForm(A, f, c)
