@@ -5,19 +5,22 @@
 # Optimization structs
 export Data, OptX, QForm
 
-""" Struct containing data-derived information about fitness effects and mismatches between clade pairs for a specific mutation """
+"""
+Struct containing data-derived information about fitness effects and mismatches between clade pairs for a specific mutation
+
+# Fields
+- `dfit_mut::DataFrame`: dataframe with fitness discrepancies for a specific mutation
+- `clade_pairs::Vector{Vector{S}}`: list of unique clade pairs associated to the mutation
+- `cpair_mut::DataFrame`: dataframe with mismatches between clade pairs
+- `weights::Vector{T}`: weights associated to fitness discrepancies for each clade pair
+"""
 mutable struct Data{S<:AbstractString,T<:Real}
 
-    "`dfit_mut::DataFrame`: dataframe with fitness discrepancies for a specific mutation"
     dfit_mut::DataFrame
-    "`clade_pairs::Vector{Vector{S}}`: list of unique clade pairs associated to the mutation"
     clade_pairs::Vector{Vector{S}}
-    "`cpair_mut::DataFrame`: dataframe with mismatches between clade pairs"
     cpair_mut::DataFrame
-    "`weights::Vector{T}`: weights associated to fitness discrepancies for each clade pair"
     weights::Vector{T}
 
-    @doc "Inner constructor"
     function Data(dfit_mut::DataFrame, clade_pairs::Vector{Vector{S}}, cpair_mut::DataFrame,
         weights::Vector{T}) where {S<:AbstractString,T<:Real}
         new{S,T}(dfit_mut, clade_pairs, cpair_mut, weights)
@@ -43,19 +46,22 @@ function Data(mutation::S1, delta_fit::DataFrame, clade_diff::DataFrame;
 
 end
 
-""" Struct containing coupling variables and associated features for a specific mutation """
+"""
+Struct containing coupling variables and associated features for a specific mutation
+    
+# Fields
+- `epi::Dict{Vector{Union{Q,S}},T}`: dictionary with site and amino acid as keys and couplings as values
+- `site_aa::Dict{Q,Vector{S}}`: dictionary with sites as keys and unique amino acids across clade pairs as values
+- `num_j::Q`: dimension of the couplings vector for the mutation
+- `J::Vector{T}`: vector with couplings
+"""
 mutable struct OptX{Q<:Int,T<:Real,S<:AbstractString}
 
-    "`epi::Dict{Vector{Union{Q,S}},T}`: dictionary with site and amino acid as keys and couplings as values"
     epi::Dict{Vector{Union{Q,S}},T}
-    "`site_aa::Dict{Q,Vector{S}}`: dictionary with sites as keys and unique amino acids across clade pairs as values"
     site_aa::Dict{Q,Vector{S}}
-    "`num_j::Q`: dimension of the couplings vector for the mutation"
     num_j::Q
-    "`J::Vector{T}`: vector with couplings"
     J::Vector{T}
 
-    @doc "Inner constructor"
     function OptX(epi::Dict{Vector{Union{Q,S}},T}, site_aa::Dict{Q,Vector{S}}, num_j::Q, J::Vector{T}) where {Q<:Int,T<:Real,S<:AbstractString}
         new{Q,T,S}(epi, site_aa, num_j, J)
     end
@@ -105,17 +111,20 @@ function OptX(data::Data, Jstart::Dict{Vector{Union{Q,S}},T}) where {S<:Abstract
 
 end
 
-""" Structure containing elements of the quadratic form for a specific mutation """
+"""
+Structure containing elements of the quadratic form for a specific mutation
+
+# Fields
+- `A::Matrix{T}`: matrix of the quadratic form
+- `f::Vector{T}`: vector of the quadratic form
+- `c::T`: constant term of the quadratic form
+"""
 struct QForm{T<:Real}
 
-    "`A::Matrix{T}`: matrix of the quadratic form"
     A::Matrix{T}
-    "`f::Vector{T}`: vector of the quadratic form"
     f::Vector{T}
-    "`c::T`: constant term of the quadratic form"
     c::T
 
-    @doc "Inner constructor"
     function QForm(A::Matrix{T}, f::Vector{T}, c::T) where {T<:Real}
         new{T}(A, f, c)
     end

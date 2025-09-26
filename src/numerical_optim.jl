@@ -13,7 +13,7 @@ Infer the coupling parameters through OWL-QN optimization from structs `OptX` an
 - `optx::Vector{OptX}`: vector of `OptX` structs,
 - `qform::Vector{QForm}`: vector of `QForm` structs,
 - `λ_vec::Vector{Float64}`: vector of L1 regularization strengths
-- `λ2::Float64=1.0e-5`: L2 regularization strength,
+- `λ2::Float64=1.0e-6`: L2 regularization strength,
 - `epsconv::Float64=1.0e-8`: Convergence threshold,
 - `verbose::Bool=false`: Verbosity flag,
 - `maxiter::Int=5000`: Maximum number of iterations.
@@ -234,9 +234,8 @@ end
 # Definition of L1 regularization
 
 # Regularization proportional to the 3D distance between residues
-function threeD_l1(λ::Float64, optx::Vector{OptX}, data::Vector{Data}, pdb::Vector{PdbTool.Pdb}, af_pdb::PdbTool.Pdb)
+function threeD_l1(λ::Float64, optx::Vector{OptX}, data::Vector{Data}, dist::Vector{Float64})
 
-    dist = threedist(optx, data, pdb, af_pdb)
     reg = threeD_l1(λ, dist)
 
     # Mutation-wise coupling indices
@@ -273,11 +272,10 @@ end
 # λ1 and λ2 are the regularization values at the limits of the sigmoid function
 # α is the steepness of the sigmoid function
 # d0 is the distance at which the regularization is halfway between λ1 and λ2
-function sigmoid_l1(λ_low::Float64, λ_high::Float64, optx::Vector{OptX}, data::Vector{Data}, pdb::Vector{PdbTool.Pdb}, af_pdb::PdbTool.Pdb;
+function sigmoid_l1(λ_low::Float64, λ_high::Float64, optx::Vector{OptX}, data::Vector{Data}, dist::Vector{Float64};
     α::Float64=1.0,
     d0::Float64=15.0)
 
-    dist = threedist(optx, data, pdb, af_pdb)
     reg = sigmoid_l1(λ_low, λ_high, dist; α=α, d0=d0)
 
     # Mutation-wise coupling indices
@@ -291,7 +289,7 @@ function sigmoid_l1(λ_low::Float64, λ_high::Float64, optx::Vector{OptX}, data:
 
     idx_jstop = vcat(collect.(idx_j[findall(x -> x[end] == '*', [data[m].dfit_mut.aa_mut[1] for m in 1:M])])...)
 
-    reg[idx_jstop] .= λ # no distance-dependent regularization for couplings to stop codon
+    reg[idx_jstop] .= λ_high # no distance-dependent regularization for couplings to stop codon
 
     return reg
 
@@ -307,45 +305,5 @@ function sigmoid_l1(λ_low::Float64, λ_high::Float64, dist::Vector{Float64};
     end
 
     return reg
-
-end
-
-# Function computing 3D distances between residues of each putative coupling for a set of PDB's
-function threedist(optx::Vector{OptX}, data::Vector{Data}, pdbs::Vector{PdbTool.Pdb}, af_pdb::PdbTool.Pdb)
-
-    M = length(data)
-
-    mut_site = [parse(Int64, data[m].dfit_mut.aa_mut[1][2:end-1]) for m in 1:M]
-    j_dim = sum([optx[m].num_j for m in 1:M])
-
-    dist = zeros(Float64, j_dim)
-
-    counter = 0
-    for m in 1:M
-        i = mut_site[m]
-        for j in sort(collect(keys(optx[m].site_aa)))
-            for aa in optx[m].site_aa[j]
-                dmin = Inf
-                counter += 1
-                for pdb in pdbs
-                    for ch1 in keys(pdb.chain)
-                        for ch2 in keys(pdb.chain)
-                            if string(i) in keys(pdb.chain[ch1].residue) && string(j) in keys(pdb.chain[ch2].residue)
-                                d = PdbTool.residueDist(pdb.chain[ch1].residue[string(i)], pdb.chain[ch2].residue[string(j)])
-                            else
-                                d = PdbTool.residueDist(af_pdb.chain[ch1].residue[string(i)], af_pdb.chain[ch2].residue[string(j)])
-                            end
-                            if d < dmin
-                                dmin = d
-                            end
-                        end
-                    end
-                end
-                dist[counter] = dmin
-            end
-        end
-    end
-
-    return dist
 
 end
