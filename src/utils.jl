@@ -54,6 +54,59 @@ function epistatic_table(mutations::Vector{S}, couplings::Vector{Dict{Vector{Uni
 
 end
 
+function frob_norm(Jtab::DataFrame)
+
+    res_pair = extract_res(Jtab)
+
+    return frob_norm(Jtab, res_pair)
+
+end
+
+function frob_norm(Jtab::DataFrame, res_pair::Vector{Tuple{Int,Int}})
+
+    group_jtab = groupby(Jtab, [:i, :j])
+    J_res = Dict{Tuple{Int,Int},Float64}()
+
+    for r in res_pair
+        J_res[(r[1], r[2])] = frob_norm(group_jtab, r)
+    end
+
+    return sort(J_res, byvalue=true, rev=true)
+
+end
+
+function frob_norm(group_jtab::GroupedDataFrame, res_pair::Tuple{Int,Int})
+
+    g = get(group_jtab, (i=res_pair[1], j=res_pair[2]), nothing)
+    g === nothing && return 0.0
+    jfrob = sqrt(sum(g.J .^ 2))
+
+    return jfrob
+
+end
+
+function extract_res(Jtab::DataFrame)
+
+    res_pair = unique([(r.i, r.j) for r in eachrow(Jtab)])
+
+    return res_pair
+
+end
+
+function Jmat(Jfrob)
+
+    Jmat = [Union{Vector{Int},Float64}[] for k in 1:length(Jfrob)]
+    counter = 0
+    for (k, v) in pairs(Jfrob)
+        counter += 1
+        push!(Jmat[counter], [k...])
+        push!(Jmat[counter], v)
+    end
+
+    return Jmat
+
+end
+
 # Read PDB files from the data folder
 function read_pdbs()
 
