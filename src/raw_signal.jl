@@ -101,10 +101,10 @@ end
 
 # Look for mutations with epistatic signal above threshold and assess
 # the presence of background mismatch sites into a sphere of radius r
-function nmis_sphere(cpair::Vector{String}, fit_epi::Dict{Vector{String},Vector{Float64}}, sites::Dict{Vector{String},Vector{Int64}},
+function nmis_sphere(cpair::Tuple{S1,S1}, fit_epi::Dict{Tuple{S2,S2},Vector{Float64}}, sites::Dict{Tuple{S2,S2},Vector{Int64}},
     clade_diff::DataFrame, pdb::Vector{PdbTool.Pdb}, af_pdb::PdbTool.Pdb;
     z_thr::Float64=3.0,
-    d_thr::Float64=10.0)
+    d_thr::Float64=10.0) where {S1<:AbstractString,S2<:AbstractString}
 
     if !haskey(fit_epi, cpair)
         throw(KeyError)
