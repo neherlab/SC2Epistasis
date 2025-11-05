@@ -275,6 +275,14 @@ function unique_clade_pairs(dfit_mut::DataFrame)
 
 end
 
+# Table of mismatches between clade pairs in mutation-specific fitness discrepancies dataframe
+function clade_pair_mut(dfit_mut::DataFrame, clade_diff::DataFrame)
+
+    cp_list = unique_clade_pairs(dfit_mut)
+    return clade_pair_mut(cp_list, clade_diff)
+
+end
+
 # Given a list of clade pairs computes a table with corresponding mismatches
 function clade_pair_mut(clade_pairs::Vector{Vector{String}}, clade_diff::DataFrame)
 
