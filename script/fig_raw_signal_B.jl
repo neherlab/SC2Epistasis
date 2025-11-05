@@ -181,7 +181,7 @@ function plot_raw_zscores_bands(cp_list::Vector{Tuple{S1,S1}},
         end
         sd_str[1:end-1] .*= ", "
 
-        ax.plot(s_dict[cp_plt], z_dict[cp_plt], ".-", zorder=2)
+        ax.plot(s_dict[cp_plt], z_dict[cp_plt], ".-", zorder=2, rasterized=true)
         ax.vlines(site_diff, 0.0, global_max, color="orange", zorder=3)
         ax.set_ylabel(cp_plt[1] * "-" * cp_plt[2], fontsize=14, labelpad=10, rotation=90, ha="left", va="center")
         ax.yaxis.set_label_position("right")  # moves labels to the right side of the subplots
