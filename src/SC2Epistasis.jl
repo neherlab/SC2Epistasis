@@ -1,6 +1,6 @@
 module SC2Epistasis
 
-using DataFrames, LinearAlgebra, PdbTool, BioAlignments, Statistics, Combinatorics, JSON, CSV, HypothesisTests
+using DataFrames, LinearAlgebra, PdbTool, BioAlignments, Statistics, Combinatorics, JSON, CSV, HypothesisTests, JLD2, PyPlot, PyCall
 
 include("clade_diff.jl")
 include("types.jl")
