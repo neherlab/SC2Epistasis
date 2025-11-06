@@ -14,8 +14,8 @@ aamut_fit = vcat([DataFrame(CSV.File(f)) for f in files]...); # concatenate all 
 rename!(aamut_fit, :cluster => :clade)
 
 # Read the json file containing clade founders mutations
-clade_muts = JSON.Parser.parsefile("data/clade_founders_neher.json");
-cmuts_roemer = JSON.Parser.parsefile("data/clade_founders_roemer.json");
+clade_muts = Dict(JSON.parsefile("data/clade_founders_neher.json"));
+cmuts_roemer = Dict(JSON.parsefile("data/clade_founders_roemer.json"));
 
 # Late clades not included in Neher's file
 pango_clades = ["XBB.1.5", "XBB.1.16", "CH.1.1", "XBB.1.9", "XBB.2.3", "EG.5.1", "XBB.1.5.70", "HK.3", "BA.2.86", "JN.1"]
@@ -34,8 +34,8 @@ clade_del = DataFrame(CSV.File("data/clade_del.csv"))
 # Select structural proteins
 prots = ["E", "M", "N", "S"]
 
-# Dictionary from Nexst-strain to pango clades
-next_pango_dic = JSON.Parser.parsefile("data/next_pango.json");
+# Dictionary from Nextstrain to pango clades
+next_pango_dic = Dict(JSON.parsefile("data/next_pango.json"));
 
 # List of deletions in clade founders
 all_del_clades = DataFrame(CSV.File("data/all_del_clades.csv"))
