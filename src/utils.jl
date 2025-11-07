@@ -179,3 +179,63 @@ function threedist(optx::Vector{OptX}, data::Vector{Data}, pdbs::Vector{PdbTool.
     return dist
 
 end
+
+# Given a set of mutations, interacting mismatching residues and inferred couplings, returns for each mutation a struct with:
+# - List of clades 
+# - List of fitness effects
+# - List of standard deviations of fitness effects
+# - List of background amino acids at interacting site
+# - List of coupling parameters J for each amino acid
+# - Wild-type amino acid at mutated site
+# - Arrival amino acid at mutated site
+# - Mutated site
+# - Interacting site
+function coup_dfit(Jtab::DataFrame, dfit::DataFrame, cdiff::DataFrame, muts::Vector{S}, res::Vector{Int}) where {S<:AbstractString}
+
+    j_dfit = []
+    for m in eachindex(muts)
+        site = parse(Int, muts[m][2:end-1])
+        # Extract couplings involving the mutation site
+        Jmut = Jtab[(Jtab.σᵢ_wt.==string(muts[m][1])).&(Jtab.i.==site).&(Jtab.σᵢ.==string(muts[m][end])).&(Jtab.j.==res[m]), :]
+        # Extract fitness discrepancies for the mutation
+        dfit_mut = dfit[dfit.aa_mut.==muts[m], :]
+        push!(j_dfit, coup_dfit(Jmut, dfit_mut, cdiff, res[m]))
+    end
+
+    return j_dfit
+
+end
+
+function coup_dfit(Jmut::DataFrame, dfit_mut::DataFrame, cdiff::DataFrame, res::Int)
+
+    cp_mut = SC2Epistasis.clade_pair_mut(dfit_mut, cdiff)
+    cp_mut = cp_mut[cp_mut.site.==res, :]
+
+    clades = unique(vcat(dfit_mut.clade1, dfit_mut.clade2))
+    fit = fill(0.0, length(clades))
+    std_fit = fill(0.0, length(clades))
+    sj = fill("", length(clades))
+    J = fill(0.0, length(clades))
+
+    for (i, c) in enumerate(clades)
+        if c in dfit_mut.clade1
+            idx_c = findall(dfit_mut.clade1 .== c)
+            fit[i] = dfit_mut.fit1[idx_c][1]
+            std_fit[i] = dfit_mut.std_fit1[idx_c][1]
+        else
+            idx_c = findall(dfit_mut.clade2 .== c)
+            fit[i] = dfit_mut.fit2[idx_c][1]
+            std_fit[i] = dfit_mut.std_fit2[idx_c][1]
+        end
+        if sum(cp_mut.clade1 .== c) != 0
+            aa = cp_mut[cp_mut.clade1.==c, :aa_c1][1]
+        else
+            aa = cp_mut[cp_mut.clade2.==c, :aa_c2][1]
+        end
+        sj[i] = aa
+        J[i] = Jmut[string.(Jmut.σⱼ).==aa, :J][1]
+    end
+
+    return (clades=clades, fit=fit, s_fit=std_fit, sj=sj, J=J, si_wt=Jmut.σᵢ_wt[1], si=Jmut.σᵢ[1], i=Jmut.i[1], j=res)
+
+end

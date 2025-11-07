@@ -4,57 +4,6 @@
 using DataFrames, CSV, PyPlot, PyCall, Statistics
 @pyimport adjustText
 
-# Functions
-function coup_dfit(Jtab::DataFrame, dfit::DataFrame, cdiff::DataFrame, muts::Vector{S}, res::Vector{Int}) where {S<:AbstractString}
-
-    j_dfit = []
-    for m in eachindex(muts)
-        site = parse(Int, muts[m][2:end-1])
-        # Extract couplings involving the mutation site
-        Jmut = Jtab[(Jtab.σᵢ_wt.==string(muts[m][1])).&(Jtab.i.==site).&(Jtab.σᵢ.==string(muts[m][end])).&(Jtab.j.==res[m]), :]
-        # Extract fitness discrepancies for the mutation
-        dfit_mut = dfit[dfit.aa_mut.==muts[m], :]
-        push!(j_dfit, coup_dfit(Jmut, dfit_mut, cdiff, res[m]))
-    end
-
-    return j_dfit
-
-end
-
-function coup_dfit(Jmut::DataFrame, dfit_mut::DataFrame, cdiff::DataFrame, res::Int)
-
-    cp_mut = SC2Epistasis.clade_pair_mut(dfit_mut, cdiff)
-    cp_mut = cp_mut[cp_mut.site.==res, :]
-
-    clades = unique(vcat(dfit_mut.clade1, dfit_mut.clade2))
-    fit = fill(0.0, length(clades))
-    std_fit = fill(0.0, length(clades))
-    sj = fill("", length(clades))
-    J = fill(0.0, length(clades))
-
-    for (i, c) in enumerate(clades)
-        if c in dfit_mut.clade1
-            idx_c = findall(dfit_mut.clade1 .== c)
-            fit[i] = dfit_mut.fit1[idx_c][1]
-            std_fit[i] = dfit_mut.std_fit1[idx_c][1]
-        else
-            idx_c = findall(dfit_mut.clade2 .== c)
-            fit[i] = dfit_mut.fit2[idx_c][1]
-            std_fit[i] = dfit_mut.std_fit2[idx_c][1]
-        end
-        if sum(cp_mut.clade1 .== c) != 0
-            aa = cp_mut[cp_mut.clade1.==c, :aa_c1][1]
-        else
-            aa = cp_mut[cp_mut.clade2.==c, :aa_c2][1]
-        end
-        sj[i] = aa
-        J[i] = Jmut[string.(Jmut.σⱼ).==aa, :J][1]
-    end
-
-    return (clades=clades, fit=fit, s_fit=std_fit, sj=sj, J=J, si_wt=Jmut.σᵢ_wt[1], si=Jmut.σᵢ[1], i=Jmut.i[1], j=res)
-
-end
-
 # Plotting functions
 function format_legend(label_vec::Vector{S}, group_size::Int=10) where {S<:AbstractString}
 
@@ -136,8 +85,8 @@ muts_list = ["R21G", "I68V", "P139S", "P384L", "A419S", "P499L", "R683Q", "S1003
 # List of interacting background mismatching residues
 int_res = [19, 69, 83, 408, 417, 445, 681, 764]
 
-# Compute structs for Plotting
-jdfit_muts = coup_dfit(Jtab, dfit_prot, cdiff_prot, muts_list, int_res)
+# Compute structs for plotting
+jdfit_muts = SC2Epistasis.coup_dfit(Jtab, dfit_prot, cdiff_prot, muts_list, int_res)
 
 # Make the plots
 fig, ax = plot_jdfit(jdfit_muts; xsize=6.0, ysize=8.0, wspace=-0.4, hspace=0.1)
