@@ -1,7 +1,7 @@
 """ Compute and save model prediction on test clades for fitness z-scores """
 
 # Import packages
-using DataFrames, CSV, JSON
+using DataFrames, CSV, JSON, JLD2
 
 ###########################################---------------------------------------
 
@@ -114,6 +114,10 @@ idx_no_empty = findall(x -> !isempty(x), zj_mut_vec)
 muts_nemp = muts_test[idx_no_empty]
 z_mut_vec = z_mut_vec[idx_no_empty]
 zj_mut_vec = zj_mut_vec[idx_no_empty]
+
+# Write clade-pair specific z-scores to JLD file
+z_vec = (z=z_mut_vec, zj=zj_mut_vec)
+@save "results/zmut_vec.jld2" z_vec
 
 # Compute raw and model curated average z-scores over clades
 av_z = sqrt.(mean.([(z_mut_vec[m]) .^ 2 for m in eachindex(z_mut_vec)]));
