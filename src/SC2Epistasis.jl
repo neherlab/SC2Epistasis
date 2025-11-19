@@ -7,5 +7,6 @@ include("types.jl")
 include("utils.jl")
 include("numerical_optim.jl")
 include("raw_signal.jl")
+include("model_pred.jl")
 
 end # module SC2Epistasis
