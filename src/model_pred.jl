@@ -218,6 +218,19 @@ function mutcp_ddf(J::DataFrame, mut::S1, cdiff::DataFrame, clade1::Vector{S2}, 
 
 end
 
+# Function to compute the model predicted fitness discrepancies for a list of mutations and a pair of clades
+function mutcp_ddf(J::DataFrame, mut::Vector{S1}, cdiff::DataFrame, clade1::S2, clade2::S2) where {S1<:AbstractString,S2<:AbstractString}
+
+    ddf = zeros(Float64, length(mut))
+
+    Threads.@threads for n in eachindex(mut)
+        ddf[n] = mutcp_ddf(J, mut[n], cdiff, clade1, clade2)
+    end
+
+    return ddf
+
+end
+
 # Functions to compute the model predicted fitness discrepancies for a specific mutation and a pair of clades
 function mutcp_ddf(J::DataFrame, mut::S1, cdiff::DataFrame, c1::S2, c2::S2) where {S1<:AbstractString,S2<:AbstractString}
 
