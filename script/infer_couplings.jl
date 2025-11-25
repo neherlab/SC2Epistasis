@@ -27,6 +27,7 @@ loss = SC2Epistasis.learn(optx, qform, l1_reg; λ2=1.0e-6, epsconv=1.0e-10, verb
 
 # Write model parameters to dataframe
 Jtab = SC2Epistasis.epistatic_table(data, optx)
+sort!(Jtab, [:i, :σᵢ, :j, :σⱼ])
 
 # Save couplings to CSV file
 CSV.write("results/jcoup_l1_1em3_3d.csv", Jtab)
