@@ -93,6 +93,12 @@ function extract_res(Jtab::DataFrame)
 
 end
 
+function Jmat(Jtab::DataFrame)
+
+    return Jmat(frob_norm(Jtab))
+
+end
+
 function Jmat(Jfrob)
 
     Jmat = [Union{Vector{Int},Float64}[] for k in 1:length(Jfrob)]
