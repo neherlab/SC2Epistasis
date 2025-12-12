@@ -13,7 +13,7 @@ using DataFrames, CSV, PdbTool
 include("../script/init_inf.jl")
 
 # Read-in PDB files
-pdbs, af_pdb = SC2Epistasis.read_pdbs()
+pdbs, af_pdb = SC2Epistasis.read_pdbs("data/ref_seq/Spike.txt")
 
 # Compute 3D distances between residues of putative couplings
 dist = SC2Epistasis.threedist(optx, data, pdbs, af_pdb)

@@ -114,7 +114,7 @@ function Jmat(Jfrob)
 end
 
 # Read PDB files from the data folder
-function read_pdbs()
+function read_pdbs(ref_file::String)
 
     # Read PDB files
     pdbs = PdbTool.Pdb[]
@@ -123,6 +123,13 @@ function read_pdbs()
             push!(pdbs, PdbTool.parsePdb("data/PDB/" * file))
         end
     end
+
+    # Spike reference sequence
+    S_ref = read(ref_file, String)
+    ref_seq = [S_ref for k in eachindex(pdbs[1].chain)]
+
+    # Map PDBs to reference sequence
+    _ = SC2Epistasis.map_pdbs!(pdbs, ref_seq; mappedTo=ref_file)
 
     return pdbs[1:end-1], pdbs[end] # return PDBs and AF2 structure
 

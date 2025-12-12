@@ -113,7 +113,7 @@ end
 # Script body
 
 # Load PDB files
-pdbs, af_pdb = SC2Epistasis.read_pdbs()
+pdbs, af_pdb = SC2Epistasis.read_pdbs("data/ref_seq/Spike.txt")
 
 # Load clade differences
 clade_diff = CSV.read("results/clade_diff.csv", DataFrame)

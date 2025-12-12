@@ -31,7 +31,7 @@ data, optx, qform = SC2Epistasis.init_all(muts_prot, dfit_train, cdiff_prot)
 # Define distance dependent regularization
 
 # Read-in PDB files
-pdbs, af_pdb = SC2Epistasis.read_pdbs()
+pdbs, af_pdb = SC2Epistasis.read_pdbs("data/ref_seq/Spike.txt")
 
 # Compute 3D distances between residues of putative couplings
 dist = SC2Epistasis.threedist(optx, data, pdbs, af_pdb)
