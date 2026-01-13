@@ -15,7 +15,7 @@ end
 
 function plot_jdfit(jdfit)
 
-    fig, ax = subplots(figsize=(6, 8))
+    fig, ax = subplots(figsize=(6, 7))
     n_c = length(jdfit.clades)
     aa = unique(jdfit.sj)
     n_aa = length(aa)
@@ -33,7 +33,8 @@ function plot_jdfit(jdfit)
         label = format_legend(label_vec, 10) * ": " * aa[k]
         push!(leg, label)
     end
-    ax.set_xticks([x[1], x[end]])
+    ax.tick_params(axis="y", labelsize=12)
+    ax.set_xticks([x[end], x[1]])
     ax.set_xticklabels(["σⱼ=S", "σⱼ=R"], fontsize=16)
     ax.set_xlim(-0.25, 1.25)
     ax.set_ylabel("Δf($(jdfit.si_wt) → $(jdfit.si))", fontsize=16)
@@ -71,4 +72,4 @@ jdfit = SC2Epistasis.coup_dfit(Jtab, dfit_prot, cdiff_prot, [mut], [res])[1]
 # Make the plot
 fig, ax = plot_jdfit(jdfit)
 fig.savefig("results/figures/fig_epi_pic_B.pdf")
-close("all")
+close(fig)
