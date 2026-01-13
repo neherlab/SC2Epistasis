@@ -3,7 +3,7 @@
 """
 
 # Import packages
-using DataFrames, CSV, PyPlot, JSON
+using DataFrames, CSV, JSON
 
 #################################---------------------------------
 
@@ -80,16 +80,3 @@ dfit_syn = synonymous_dfit(cnt_thr=cnt_thr)
 z_stop = SC2Epistasis.z_dfit(dfit_stop)
 z_nsyn = SC2Epistasis.z_dfit(dfit_nsyn)
 z_syn = SC2Epistasis.z_dfit(dfit_syn)
-
-# Plot histogram
-figure(figsize=(8, 4))
-hist(z_nsyn, bins=50, alpha=0.6, density=true, label="Non-synonymous");
-hist(z_syn, bins=50, alpha=0.5, density=true, label="Synonymous");
-hist(z_stop, bins=50, alpha=0.4, density=true, label="Stop codon");
-yscale("log")
-legend(fontsize=12)
-xlabel("Fitness z-score", fontsize=14);
-ylabel("Density", fontsize=14);
-tight_layout()
-savefig("results/figures/fig_epi_pic_D.pdf", dpi=500);
-close("all");

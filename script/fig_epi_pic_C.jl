@@ -2,29 +2,35 @@
     Script to generate panel C of figure 2
 """
 
-# Import packages
-using DataFrames, CSV, PyPlot
+# Run preliminary scripts
+include("z_struct_prots.jl")
+include("z_clades_regions.jl")
 
-# Load and merge the USA-UK mutational fitness dataframes
-include("usa_uk_ener.jl")
 
-# Load the fitness discrepancies across clades
-delta_fit = CSV.read("results/delta_fit.csv", DataFrame)
-prot = "S" # Select Spike protein
-dfit_prot = delta_fit[delta_fit.prot.==prot, :]
+# Make plot
+fig, ax = subplots(2, 1, figsize=(6.5, 8), sharex=true)
 
-# Compute z-scores for both datasets
-rename!(fit_merge, [:delta_fitness => :fit1, :delta_fitness_1 => :fit2, :uncertainty => :std_fit1, :uncertainty_1 => :std_fit2]) # rename columns for compatibility
-z_country = SC2Epistasis.z_dfit(fit_merge)
-z_clades = SC2Epistasis.z_dfit(dfit_prot)
+# Top histogram
+ax[1].hist(z_clades, bins=40, density=true, alpha=0.8, label="Clades", edgecolor="black");
+ax[1].hist(z_country, bins=20, density=true, alpha=0.6, label="USA-UK", edgecolor="black");
+ax[1].legend(fontsize=13);
+ax[1].tick_params(axis="y", labelsize=14);
+ax[1].set_yscale("log");
 
-# Make histogram comparison
-hist(z_clades, bins=40, density=true, alpha=0.8, label="Clades", edgecolor="black")
-hist(z_country, bins=20, density=true, alpha=0.6, label="USA-UK", edgecolor="black")
-legend(fontsize=12)
-yscale("log")
-xlabel("Normalized fitness discrepancy", fontsize=14);
-ylabel("Density", fontsize=14);
-tight_layout();
-savefig("results/figures/fig_epi_pic_C.pdf", dpi=500);
-close("all");
+# Bottom histogram
+ax[2].hist(z_nsyn, bins=50, alpha=0.6, density=true, label="Non-synonymous");
+ax[2].hist(z_syn, bins=50, alpha=0.5, density=true, label="Synonymous");
+ax[2].hist(z_stop, bins=50, alpha=0.4, density=true, label="Stop codon");
+ax[2].set_xlabel("Fitness z-score", fontsize=16);
+ax[2].legend(fontsize=13);
+ax[2].tick_params(axis="both", labelsize=14);
+ax[2].set_yscale("log");
+
+fig.tight_layout(rect=[0.05, 0, 1, 1]);
+
+# Add common y-axis label
+fig.text(0.02, 0.5, "Density", va="center", rotation="vertical", fontsize=16);
+
+# Save figure
+fig.savefig("results/figures/fig_epi_pic_C.pdf");
+close(fig)
