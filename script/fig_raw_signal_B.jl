@@ -64,7 +64,7 @@ function plot_sphere_frac(cp_plt::Vector{Tuple{S1,S1}}, frac::Vector{Matrix{Floa
 
     n = length(cp_plt)  # number of clade pairs to be plotted
 
-    fig, axs = subplots(n, 1, figsize=(5, 6 * n), sharex=true)
+    fig, axs = subplots(n, 1, figsize=(4.5, 5.4 * n), sharex=true)
     if n == 1
         axs = [axs]
     end
@@ -79,14 +79,17 @@ function plot_sphere_frac(cp_plt::Vector{Tuple{S1,S1}}, frac::Vector{Matrix{Floa
         ax.plot(radii, rnd_frac[i], ".-")
 
         # Subplot clade pair as y-axis label
-        ax.set_ylabel(cpair[1] * "-" * cpair[2], fontsize=14, labelpad=10, rotation=90, ha="left", va="center")
-        ax.yaxis.set_label_position("right")  # moves labels to the right side of the subplots
+        ax.set_ylabel(cpair[1] * "-" * cpair[2], fontsize=14, labelpad=18, rotation=90, ha="left", va="center")
+
+        # Move y-tick labels to the right and increase fontsize
+        ax.yaxis.tick_right()
+        ax.tick_params(axis="y", labelsize=11)
 
         # set common y-axis limit
         ax.set_ylim(0.0, 1.05)
 
         # Subplot legend
-        ax.legend(vcat("z ≥ " .* string.(z_thr[i]), "Random"), fontsize=14)
+        ax.legend(vcat("z ≥ " .* string.(z_thr[i]), "Random"), fontsize=13)
 
         # only clear tick labels for non-bottom subplots
         if i != n
@@ -96,13 +99,14 @@ function plot_sphere_frac(cp_plt::Vector{Tuple{S1,S1}}, frac::Vector{Matrix{Floa
     end
 
     # Then adjust margins to accommodate the common y-axis label and right-side labels
-    fig.tight_layout(rect=(0.06, 0.025, 0.98, 0.98))
+    fig.tight_layout(rect=(0.02, 0.025, 0.87, 0.98))
 
-    # common y-axis label
-    fig.text(0.01, 0.5, "Fraction of " * L"i\;" * "s.t. " * L"\exists j:\:d(i,j) < d_{thr}", va="center", rotation="vertical", fontsize=14)
+    # common y-axis label on the right side
+    fig.text(0.92, 0.5, "Fraction of " * L"i\;" * "s.t. " * L"\exists j:\:d(i,j) < d_{thr}", va="center", rotation="vertical", fontsize=16)
 
     # bottom x-axis
-    axs[end].set_xlabel("Sphere radius (Å)", fontsize=14)
+    axs[end].set_xlabel("Sphere radius (Å)", fontsize=16)
+    axs[end].tick_params(axis="x", labelsize=11)
 
     return fig, axs
 
@@ -142,6 +146,6 @@ for i in eachindex(cp_plt)
     rnd_frac[i], _ = SC2Epistasis.rand_frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff, pdbs, af_pdb, radii, z_thr=z_thr[i][1], nsamp=100)
 end
 
-fig, ax = plot_sphere_frac(cp_plt, z_dict, s_dict, clade_diff, pdbs, af_pdb)
+fig, ax = plot_sphere_frac(cp_plt, frac_vec, rnd_frac; radii=radii, z_thr=z_thr)
 fig.savefig("results/figures/fig_raw_signal_B.pdf")
-close("all")
+close(fig)

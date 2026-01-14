@@ -118,7 +118,7 @@ delta_fit = CSV.read("results/delta_fit.csv", DataFrame)
 rename!(delta_fit, :aa_mut => :mutation) # rename column for consistency
 
 # Load dataframe with clade founder mismatches
-clade_diff = CSV.read("data/clade_founder_mismatches.csv", DataFrame)
+clade_diff = CSV.read("results/clade_diff.csv", DataFrame)
 
 # Select Spike protein
 prot = "S"
