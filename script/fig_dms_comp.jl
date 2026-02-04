@@ -27,18 +27,21 @@ end
 
 function plot_shift(dms_shift_ba1_ba2_21j::DataFrame, dms_shift_ba2_xbb::DataFrame, Jtab::DataFrame,
     dfit_prot::DataFrame, cdiff_prot::DataFrame, clade_pairs::Vector{Tuple{S,S}};
-    cnt_thr1::Vector{Float64}=[40.0, 20.0, 40.0],
-    cnt_thr2::Vector{Float64}=[20.0, 20.0, 10.0]) where S<:AbstractString
+    ncols::Int=2,
+    cnt_thr1::Vector{Float64}=[20.0, 40.0],
+    cnt_thr2::Vector{Float64}=[20.0, 10.0]) where S<:AbstractString
+
+    @assert length(clade_pairs) == ncols
 
     # Initialize figure
-    fig, ax = subplots(1, 3, figsize=(13, 4))
+    fig, ax = subplots(1, ncols, figsize=(ncols * 4 + 1, 4))
 
     # Cycle over clade pairs
     for (i, cpair) in enumerate(clade_pairs)
 
         # Merge DMS shifts and fitness discrepancies
         shift_dfit = merge_dms_dfit(
-            i == 1 || i == 2 ? dms_shift_ba1_ba2_21j : dms_shift_ba2_xbb,
+            cpair[2] == "21K" ? dms_shift_ba1_ba2_21j : dms_shift_ba2_xbb,
             dfit_prot,
             cpair;
             cnt_thr1=cnt_thr1[i],
@@ -53,6 +56,10 @@ function plot_shift(dms_shift_ba1_ba2_21j::DataFrame, dms_shift_ba2_xbb::DataFra
         key2 = "score_" * cld_comp
         shift = shift_dfit[!, key1] .- shift_dfit[!, key2] # experimental shifts
         ρ = cor(shift, j_ddf) # correlation coefficient
+
+        if length(clade_pairs) == 1
+            ax = [ax] # ensure ax is an array for single subplot case
+        end
 
         ax[i].scatter(j_ddf, shift, alpha=0.7, s=10)
         ax[i].set_title("$(cpair[1])-$(cpair[2])", fontsize=14)
@@ -92,11 +99,78 @@ function plot_shift(dms_shift_ba1_ba2_21j::DataFrame, dms_shift_ba2_xbb::DataFra
 
     end
 
-    fig.supxlabel("ΔΔϕ", fontsize=14, ha="center")
     fig.supylabel("Experimental fitness shift", fontsize=14, va="center")
+    fig.supxlabel("ΔΔϕ", fontsize=14, ha="center")
     fig.tight_layout()
 
     return fig, ax
+
+end
+
+function plot_shift_single(dms_shift::DataFrame, Jtab::DataFrame,
+    dfit_prot::DataFrame, cdiff_prot::DataFrame, clade_pair::Tuple{S,S};
+    cnt_thr1::Float64=40.0,
+    cnt_thr2::Float64=20.0) where S<:AbstractString
+
+    # Merge DMS shifts and fitness discrepancies
+    shift_dfit = merge_dms_dfit(
+        dms_shift,
+        dfit_prot,
+        clade_pair;
+        cnt_thr1=cnt_thr1,
+        cnt_thr2=cnt_thr2
+    )
+
+    muts = shift_dfit.mutation # overlap mutations
+    j_ddf = SC2Epistasis.mutcp_ddf(Jtab, muts, cdiff_prot, clade_pair[1], clade_pair[2]) # model predicted fitness discrepancies
+    cld_shift = clade_pair[1]
+    cld_comp = clade_pair[2]
+    key1 = "score_" * cld_shift
+    key2 = "score_" * cld_comp
+    shift = shift_dfit[!, key1] .- shift_dfit[!, key2] # experimental shifts
+    ρ = cor(shift, j_ddf) # correlation coefficient
+
+    scatter(j_ddf, shift, alpha=0.7, s=10)
+    #title("$(clade_pair[1])-$(clade_pair[2])", fontsize=14)
+
+    # Get current axis limits
+    xlim_vals = xlim()
+    ylim_vals = ylim()
+    x_range = xlim_vals[2] - xlim_vals[1]
+    y_range = ylim_vals[2] - ylim_vals[1]
+
+    # Try different positions: top-left, top-right, bottom-left, bottom-right
+    positions = [
+        (0.05, 0.95, "top", "left"),
+        (0.95, 0.95, "top", "right"),
+        (0.05, 0.05, "bottom", "left"),
+        (0.95, 0.05, "bottom", "right")
+    ]
+
+    # Find position with least overlap
+    best_pos = positions[1]
+    min_overlap = Inf
+
+    for pos in positions
+        x_text = xlim_vals[1] + pos[1] * x_range
+        y_text = ylim_vals[1] + pos[2] * y_range
+        # Count nearby points (within 10% of range)
+        overlap = sum((abs.(j_ddf .- x_text) .< 0.1 * x_range) .& (abs.(shift .- y_text) .< 0.1 * y_range))
+        if overlap < min_overlap
+            min_overlap = overlap
+            best_pos = pos
+        end
+    end
+
+    # Get current axes
+    ax = gca()
+    text(best_pos[1], best_pos[2], "ρ = " * string(round(ρ, digits=2)),
+        fontsize=12, transform=ax.transAxes,
+        verticalalignment=best_pos[3], horizontalalignment=best_pos[4])
+
+    xlabel("ΔΔϕ", fontsize=14)
+    ylabel("Experimental fitness shift", fontsize=14)
+    tight_layout()
 
 end
 
@@ -126,13 +200,13 @@ dfit_prot = delta_fit[delta_fit.prot.==prot, :]
 cdiff_prot = clade_diff[clade_diff.prot.==prot, :]
 
 # Clade pairs to analyze
-clade_pairs = [("21J", "21K"), ("21L", "21K"), ("23A", "21L")]
+cpair = ("21J", "21K")
 
 # Predicted counts vectors
-cnt_thr1 = [40.0, 20.0, 20.0]
-cnt_thr2 = [20.0, 20.0, 15.0]
+cnt_thr1 = 40.0
+cnt_thr2 = 20.0
 
 # Initialize figure
-fig, ax = plot_shift(dms_shift_ba1_ba2_21j, dms_shift_ba2_xbb, Jtab, dfit_prot, cdiff_prot, clade_pairs; cnt_thr1=cnt_thr1, cnt_thr2=cnt_thr2)
-fig.savefig("results/figures/fig_dms_comp.pdf")
+plot_shift_single(dms_shift_ba1_ba2_21j, Jtab, dfit_prot, cdiff_prot, cpair; cnt_thr1=cnt_thr1, cnt_thr2=cnt_thr2)
+savefig("results/figures/fig_dms_comp.pdf")
 close(fig)

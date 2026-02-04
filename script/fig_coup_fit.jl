@@ -1,4 +1,4 @@
-""" Script to generate figure 6 """
+""" Script to generate figure panel A of figure 6 """
 
 # Import packages
 using DataFrames, CSV, PyPlot, PyCall, Statistics
@@ -14,13 +14,15 @@ function format_legend(label_vec::Vector{S}, group_size::Int=10) where {S<:Abstr
 end
 
 function plot_jdfit(jdfit_muts::Vector{Any};
+    nrows::Int=2,
+    ncols::Int=2,
     xsize::Float64=6.0,
     ysize::Float64=8.0,
-    wspace::Float64=-0.4,
+    wspace::Float64=-0.1,
     hspace::Float64=0.1)
 
-    #@assert nrows * ncol == length(jdfit_muts)
-    fig, ax = subplots(2, 4, figsize=(xsize * 4, ysize * 2))
+    @assert nrows * ncols == length(jdfit_muts)
+    fig, ax = subplots(nrows, ncols, figsize=(xsize * ncols, ysize * nrows))
 
     for n in eachindex(jdfit_muts)
 
@@ -49,14 +51,13 @@ function plot_jdfit(jdfit_muts::Vector{Any};
         ax[n].set_box_aspect(4 / 3)
         ax[n].set_xlabel("i=$(jdfit.i) " * ", j=$(jdfit.j)", fontsize=14)
         ax[n].set_ylabel("Δf($(jdfit.si_wt) → $(jdfit.si))", fontsize=14)
+        ax[n].tick_params(labelsize=12)
         ax[n].legend(leg, fontsize=10)
 
     end
 
     fig.supxlabel("Coupling J", fontsize=16, ha="center")
     fig.supylabel("Mutation Δf", fontsize=16, va="center")
-
-    fig.tight_layout()
 
     # Minimize white space between subplots
     fig.subplots_adjust(wspace=wspace, hspace=hspace)
@@ -81,15 +82,15 @@ dfit_prot = delta_fit[delta_fit.prot.==prot, :]
 cdiff_prot = clade_diff[clade_diff.prot.==prot, :]
 
 # List of mutations to be plotted
-muts_list = ["R21G", "I68V", "P139S", "P384L", "A419S", "P499L", "R683Q", "S1003I"]
+muts_list = ["R21G", "P384L", "P499L", "R683Q"]
 # List of interacting background mismatching residues
-int_res = [19, 69, 83, 408, 417, 445, 681, 764]
+int_res = [19, 408, 445, 681]
 
 # Compute structs for plotting
 jdfit_muts = SC2Epistasis.coup_dfit(Jtab, dfit_prot, cdiff_prot, muts_list, int_res)
 
 # Make the plots
-fig, ax = plot_jdfit(jdfit_muts; xsize=6.0, ysize=8.0, wspace=-0.4, hspace=0.1)
+fig, ax = plot_jdfit(jdfit_muts; nrows=2, ncols=2, wspace=-0.1, hspace=0.1)
 fig.tight_layout()
-fig.supylabel("Mutation Δf", fontsize=16, va="center", x=0.065)
-fig.savefig("figures/fig_coup_fit.pdf")
+fig.savefig("results/figures/fig_coup_fit.pdf")
+close(fig)
