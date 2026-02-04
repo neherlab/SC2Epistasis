@@ -208,5 +208,5 @@ cnt_thr2 = 20.0
 
 # Initialize figure
 plot_shift_single(dms_shift_ba1_ba2_21j, Jtab, dfit_prot, cdiff_prot, cpair; cnt_thr1=cnt_thr1, cnt_thr2=cnt_thr2)
-savefig("results/figures/fig_dms_comp.pdf")
+savefig("results/figures/fig_coup_valid_C.pdf")
 close(fig)
