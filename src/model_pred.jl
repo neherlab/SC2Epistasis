@@ -294,3 +294,43 @@ function energy(J::DataFrame, dfit::DataFrame, cdiff::DataFrame)
     return dot(w, energy)
 
 end
+
+# Function to compute the inferred epistasis as a function of the distance between clade pairs
+function epistasis_mis(Jtab::DataFrame, dfit::DataFrame, cdiff::DataFrame)
+
+    clade_pairs = SC2Epistasis.unique_clade_pairs(dfit)
+    epi_dist_dic = Dict{Int,Vector{Float64}}()
+
+    for n in eachindex(clade_pairs)
+
+        c1 = clade_pairs[n][1]
+        c2 = clade_pairs[n][2]
+        ddj = SC2Epistasis.ddj_cpair(Jtab, dfit, cdiff, c1, c2)
+        d = size(cdiff[(cdiff.clade1.==c1).&(cdiff.clade2.==c2), :], 1)
+        if !haskey(epi_dist_dic, d)
+            epi_dist_dic[d] = [mean(ddj .^ 2)]
+        end
+        push!(epi_dist_dic[d], mean(ddj .^ 2))
+
+    end
+
+    return epi_dist_dic
+
+end
+
+# Function to compute the ΔΔJ for all mutations in a given pair of clades
+function ddj_cpair(Jtab::DataFrame, dfit::DataFrame, cdiff::DataFrame, c1::S, c2::S) where {S<:AbstractString}
+
+    if sum((dfit.clade1 .== c1) .& (dfit.clade2 .== c2)) != 0
+        dfit_c1c2 = dfit[(dfit.clade1.==c1).&(dfit.clade2.==c2), :]
+    else
+        dfit_c1c2 = dfit[(dfit.clade1.==c2).&(dfit.clade2.==c1), :]
+    end
+
+    muts = dfit_c1c2.aa_mut
+
+    ddj = mutcp_ddf(Jtab, muts, cdiff, c1, c2)
+
+    return ddj
+
+end

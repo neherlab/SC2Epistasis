@@ -271,7 +271,7 @@ function unique_clade_pairs(dfit_mut::DataFrame)
         clade_pairs[k] = [clade1[k], clade2[k]]
     end
 
-    return clade_pairs
+    return unique(clade_pairs)
 
 end
 

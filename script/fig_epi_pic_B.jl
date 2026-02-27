@@ -13,7 +13,7 @@ function format_legend(label_vec::Vector{S}, group_size::Int=10) where {S<:Abstr
 
 end
 
-function plot_jdfit(jdfit)
+function plot_jdfit(jdfit; markersize=100, alpha=0.8)
 
     fig, ax = subplots(figsize=(6, 7))
     n_c = length(jdfit.clades)
@@ -25,7 +25,7 @@ function plot_jdfit(jdfit)
     leg = String[]
     for k in 1:n_aa
         idx[k] .= (jdfit.sj .== aa[k])
-        ax.scatter(x[idx[k]], jdfit.fit[idx[k]])
+        ax.scatter(x[idx[k]], jdfit.fit[idx[k]], s=markersize, alpha=alpha)
         av = mean(jdfit.fit[idx[k]])
         unc = sqrt(sum(jdfit.s_fit[idx[k]] .^ 2) / sum(idx[k]))
         ax.errorbar(x[idx[k]][1], av, yerr=unc, fmt="*", markersize=11, elinewidth=2.5, capsize=5, alpha=0.6)
