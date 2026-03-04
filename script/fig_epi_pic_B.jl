@@ -1,8 +1,7 @@
 """ Script for generating panel A of figure 2 """
 
 # Import packages
-using DataFrames, CSV, PyPlot, Printf, Statistics, PyCall
-@pyimport adjustText
+using DataFrames, CSV, PyPlot, Statistics
 
 # Plotting functions
 function format_legend(label_vec::Vector{S}, group_size::Int=10) where {S<:AbstractString}
@@ -13,7 +12,7 @@ function format_legend(label_vec::Vector{S}, group_size::Int=10) where {S<:Abstr
 
 end
 
-function plot_jdfit(jdfit; markersize=100, alpha=0.8)
+function plot_jdfit(jdfit; markersize=60, alpha=0.7)
 
     fig, ax = subplots(figsize=(6, 7))
     n_c = length(jdfit.clades)
@@ -70,6 +69,6 @@ res = 408
 jdfit = SC2Epistasis.coup_dfit(Jtab, dfit_prot, cdiff_prot, [mut], [res])[1]
 
 # Make the plot
-fig, ax = plot_jdfit(jdfit)
+fig, ax = plot_jdfit(jdfit; markersize=60, alpha=0.7)
 fig.savefig("results/figures/fig_epi_pic_B.pdf")
 close(fig)

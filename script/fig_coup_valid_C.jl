@@ -23,7 +23,7 @@ function merge_dms_dfit(dms_shift::DataFrame, dfit::DataFrame, clade_pair::Tuple
 
 end
 
-# Plotting function
+# Plotting functions
 
 function plot_shift(dms_shift_ba1_ba2_21j::DataFrame, dms_shift_ba2_xbb::DataFrame, Jtab::DataFrame,
     dfit_prot::DataFrame, cdiff_prot::DataFrame, clade_pairs::Vector{Tuple{S,S}};
@@ -209,4 +209,4 @@ cnt_thr2 = 20.0
 # Initialize figure
 plot_shift_single(dms_shift_ba1_ba2_21j, Jtab, dfit_prot, cdiff_prot, cpair; cnt_thr1=cnt_thr1, cnt_thr2=cnt_thr2)
 savefig("results/figures/fig_coup_valid_C.pdf")
-close(fig)
+close("all")

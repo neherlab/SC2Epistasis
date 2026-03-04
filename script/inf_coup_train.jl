@@ -1,4 +1,5 @@
-""" Script to infer the couplings in the framework of the train test split for validation
+""" 
+    Script to infer the couplings in the framework of the train-test split for validation
 """
 
 # Import packages

@@ -18,14 +18,14 @@ function plot_jdfit(jdfit_muts::Vector{Any};
     ncols::Int=2,
     xsize::Float64=6.0,
     ysize::Float64=8.0,
-    wspace::Float64=-0.1,
+    wspace::Float64=-0.3,
     hspace::Float64=0.15,
-    left::Float64=0.06,
-    right::Float64=0.94,
+    left::Float64=0.02,
+    right::Float64=0.98,
     top::Float64=0.97,
     bottom::Float64=0.08,
     x_supy::Float64=0.01,
-    y_supx::Float64=0.05)
+    y_supx::Float64=0.07)
 
     @assert nrows * ncols == length(jdfit_muts)
     fig, ax = subplots(nrows, ncols, figsize=(xsize * ncols, ysize * nrows))
@@ -37,7 +37,6 @@ function plot_jdfit(jdfit_muts::Vector{Any};
         aa = unique(jdfit.sj)
         n_aa = length(aa)
         idx = [zeros(Bool, n_c) for a in 1:n_aa]
-        #leg = String[]
         texts = PyObject[]
         for k in 1:n_aa
             idx[k] .= (jdfit.sj .== aa[k])
@@ -54,9 +53,6 @@ function plot_jdfit(jdfit_muts::Vector{Any};
                 push!(texts, ax[n].text(jdfit.J[idx[k]][c] + x_offset, jdfit.fit[idx[k]][c],
                     jdfit.clades[idx[k]][c], fontsize=10))
             end
-            label_vec = jdfit[1][idx[k]]
-            #label = format_legend(label_vec, 10) * ": " * aa[k]
-            #push!(leg, label)
         end
         # Call adjust_text separately for each subplot with stronger repulsion
         adjustText.adjust_text(texts, ax=ax[n], only_move=Dict("text" => "xy", "points" => ""),
@@ -66,7 +62,6 @@ function plot_jdfit(jdfit_muts::Vector{Any};
         ax[n].set_xlabel("i=$(jdfit.i) " * ", j=$(jdfit.j)", fontsize=14)
         ax[n].set_ylabel("Δf($(jdfit.si_wt) → $(jdfit.si))", fontsize=14)
         ax[n].tick_params(labelsize=12)
-        #ax[n].legend(leg, fontsize=10)
 
     end
 
@@ -104,6 +99,6 @@ int_res = [19, 408, 445, 681]
 jdfit_muts = SC2Epistasis.coup_dfit(Jtab, dfit_prot, cdiff_prot, muts_list, int_res)
 
 # Make the plots
-fig, ax = plot_jdfit(jdfit_muts; nrows=2, ncols=2, wspace=-0.4, hspace=0.15, left=0.02, right=0.98, y_supx=0.09)
+fig, ax = plot_jdfit(jdfit_muts; nrows=2, ncols=2, wspace=-0.3, hspace=0.15, left=0.02, right=0.98, y_supx=0.07)
 fig.savefig("results/figures/fig_coup_valid_A.pdf")
 close(fig)

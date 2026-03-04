@@ -35,4 +35,4 @@ ax.set_ylabel(clade_pair[2] * " (Omicron BA.1) fitness effect", fontweight="bold
 fig.text(0.2, 0.85, "r = " * @sprintf("%.2f", r) * "\nn = " * string(n), fontsize=12)
 fig.tight_layout()
 fig.savefig("results/figures/fig_epi_pic_A.pdf")
-close("all")
+close(fig)
