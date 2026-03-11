@@ -1,4 +1,4 @@
-""" Script for generating panel A of figure 2 """
+""" Script for generating panel B of figure 2 """
 
 # Import packages
 using DataFrames, CSV, PyPlot, Statistics

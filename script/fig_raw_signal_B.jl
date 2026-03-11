@@ -1,4 +1,4 @@
-""" Script to generate panel C of figure 3 """
+""" Script to generate panel B of figure 3 """
 
 # Import packages
 using DataFrames, CSV, JLD2, PyPlot, PdbTool
