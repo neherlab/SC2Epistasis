@@ -1,5 +1,5 @@
 # SC2Epistasis
-This repository contains the code for reproducing the results of the manuscript: [Detecting epistasis from SARS-CoV-2 genome data]().
+This repository contains the code for reproducing the results of the manuscript: [Epistasis and the changing fitness landscapes of SARS-CoV-2](https://doi.org/10.64898/2026.03.12.711354).
 
 ## Overview
 The manuscript builds on the clade specific fitness effects of amino acid mutations obtained from [SARS2-mut-fitness-v2](https://github.com/neherlab/SARS2-mut-fitness-v2/tree/main), based on the mutation counts from the [UShER tree](https://github.com/jbloomlab/SARS2-mut-fitness/tree/main/results_gisaid_2024-04-24/expected_vs_actual_mut_counts). A minimal epistatic model is inferred by minimization of an objective function defined from the discrepancies of fitness effects across clades.
@@ -21,7 +21,7 @@ The manuscript builds on the clade specific fitness effects of amino acid mutati
   - $\sigma_i$: mutant amino acid at site i.
   - $j$: residue index of site j.
   - $\sigma_j$: background amino acid at site j.
-  - J: inferred coupling $J_{ij}(\sigma_i, \sigma_j; \sigma^{wt}_i)$.
+  - $J$: inferred coupling $J_{ij}(\sigma_i, \sigma_j; \sigma^{wt}_i)$.
 
 ### Main scripts
 - `script/delta_fit.jl`: script to generate the dataframe with fitness effects between pairs of clades.
@@ -84,7 +84,7 @@ This implicitly runs the script `script/init_inf.jl`, which initializes the tail
 Then, it runs the inference function `learn(optx, qform, l1_vec; kwargs...)` which returns the optimal value of the objective and modify in place the coupling parameters stored in `optx`.
 
 ## References
-- Manuscript this repository refers to [insert doi]().
-- Context dependent estimates of SARS-CoV-2 mutation rates [Haddox et al. 2025](https://doi.org/10.1093/nar/gkaf503).
-- Original approach for estimating fitness effects of mutations [Bloom & Neher 2023](https://doi.org/10.1093/ve/veae026).
-- Usage of Potts model for epistasis inference in the context of MSAs of protein sequences [Morcos et al. 2011](https://doi.org/10.1073/pnas.1111471108).
+- Manuscript this repository refers to [Sesta and Neher (2026)](https://doi.org/10.64898/2026.03.12.711354).
+- Context dependent estimates of SARS-CoV-2 mutation rates [Haddox et al. (2025)](https://doi.org/10.1093/nar/gkaf503).
+- Original approach for estimating fitness effects of mutations [Bloom & Neher (2023)](https://doi.org/10.1093/ve/veae026).
+- Potts model for epistasis inference in the context of MSAs of protein sequences [Morcos et al. (2011)](https://doi.org/10.1073/pnas.1111471108).
