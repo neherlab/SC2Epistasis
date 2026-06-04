@@ -222,3 +222,63 @@ function rand_nmis_sphere(cpair::Tuple{S1,S1}, fit_epi::Dict{Tuple{S2,S2},Vector
     return frac, cnt_neighbor
 
 end
+
+# Random benchmark: for a given pair of clades generates random mismtaches on the protein chain
+# only at sites characterized by a Shannon entropy above a threshold.
+# It then computes the fraction of sites with z-score above threshold for which a mismatch is found
+# in spheres of increasing radii.
+function rand_frac_in_sphere(cpair::Tuple{S1,S1}, fit_epi::Dict{Tuple{S2,S2},Vector{Float64}}, sites::Dict{Tuple{S2,S2},Vector{Int64}},
+    clade_diff::DataFrame, pdb::Vector{PdbTool.Pdb}, af_pdb::PdbTool.Pdb, radii::Vector{Float64}, var_sites::Vector{Int64};
+    z_thr::Float64=1.5,
+    nsamp::Int64=100) where {S1<:AbstractString,S2<:AbstractString}
+
+    if !haskey(fit_epi, cpair)
+        throw(KeyError)
+    end
+
+    frac = zeros(Float64, length(radii))
+    f = zeros(Float64, length(radii), nsamp)
+    std_frac = zeros(Float64, length(radii))
+
+    Threads.@threads for r in eachindex(radii)
+        f[r, :], _ = rand_nmis_sphere(cpair, fit_epi, sites, clade_diff, pdb, af_pdb, var_sites; z_thr=z_thr, d_thr=radii[r], nsamp=nsamp)
+        frac[r] = mean(f[r, :])
+        std_frac[r] = std(f[r, :]) / sqrt(nsamp)
+    end
+
+    return frac, std_frac
+
+end
+
+function rand_nmis_sphere(cpair::Tuple{S1,S1}, fit_epi::Dict{Tuple{S2,S2},Vector{Float64}}, sites::Dict{Tuple{S2,S2},Vector{Int64}},
+    clade_diff::DataFrame, pdb::Vector{PdbTool.Pdb}, af_pdb::PdbTool.Pdb, var_sites::Vector{Int64};
+    z_thr::Float64=1.5,
+    d_thr::Float64=10.0,
+    nsamp::Int64=100) where {S1<:AbstractString,S2<:AbstractString}
+
+    if !haskey(fit_epi, cpair)
+        throw(KeyError)
+    end
+
+    @assert all(issetequal(keys(pdb[1].chain), keys(d.chain)) for d in vcat(pdb[2:end], af_pdb)) # Check that all PDB's have the same chains
+    chains = collect(keys(af_pdb.chain))
+    L = length(af_pdb.chain[chains[1]].residue)
+
+    idx_epi = findall(x -> x >= z_thr, fit_epi[cpair])
+    s_mut = sites[cpair][idx_epi]
+    nmut = length(s_mut)
+    nmis = length(clade_diff[(clade_diff.clade1.==cpair[1]).&(clade_diff.clade2.==cpair[2]), :site])
+    smis = clade_diff[(clade_diff.clade1.==cpair[1]).&(clade_diff.clade2.==cpair[2]), :site]
+
+    frac = zeros(Float64, nsamp) # fraction of sites within sphere for each replicate
+    cnt_neighbor = zeros(Float64, nmut, nsamp) # count of neighbors within threshold for each replicate and site
+    d_tens = zeros(Float64, nmut, nmis, nsamp) # tensor with distances for all random samples
+    j_rand = rand(setdiff(var_sites, vcat(s_mut, smis)), nmis, nsamp) # random mismatches
+
+    d_tens .= SC2Epistasis.dist_res.(reshape(s_mut, :, 1, 1), reshape(j_rand, 1, nmis, nsamp), Ref(pdb), Ref(af_pdb))
+    cnt_neighbor .= sum(d_tens .<= d_thr, dims=2)[:, 1, :]
+    frac .= mean(cnt_neighbor .>= 1, dims=1)[1, :]
+
+    return frac, cnt_neighbor
+
+end
