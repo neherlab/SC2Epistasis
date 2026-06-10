@@ -81,6 +81,11 @@ cp_plt = [("20I", "21J"), ("20I", "21L"), ("21J", "21K"), ("21K", "23I")]
 radii = [5.0, 8.0, 10.0, 12.0, 15.0, 20.0]
 z_thr = [[1.5, 1.7, 2.0], [2.0, 2.25, 2.5], [1.5, 1.75, 2.0], [1.5, 1.75, 2.0]]
 
+# Import dataframe with sites and Shannon entropy
+site_shannon_ent = CSV.read("data/nextstrain_staging_nextclade_sars-cov-2_diversity.tsv", DataFrame)
+ent_thr = 0.01
+var_sites = site_shannon_ent.position[site_shannon_ent.entropy.>=ent_thr]
+
 # Initialize arrays to store fractions
 frac_vec = [zeros(Float64, length(radii), length(z_thr[i])) for i in 1:length(cp_plt)]
 rnd_frac = [zeros(Float64, length(radii)) for i in 1:length(cp_plt)]
@@ -89,7 +94,7 @@ for i in eachindex(cp_plt)
     # Compute fractions in spheres
     frac_vec[i] = SC2Epistasis.frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff, pdbs, af_pdb, radii, z_thr[i])
     # Compute random benchmark
-    rnd_frac[i], _ = SC2Epistasis.rand_frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff, pdbs, af_pdb, radii, z_thr=z_thr[i][1], nsamp=100)
+    rnd_frac[i], _ = SC2Epistasis.rand_frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff, pdbs, af_pdb, radii, var_sites; z_thr=z_thr[i][1], nsamp=100)
 end
 
 fig, ax = plot_sphere_frac(cp_plt, frac_vec, rnd_frac; radii=radii, z_thr=z_thr)
