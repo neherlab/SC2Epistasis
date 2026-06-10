@@ -28,7 +28,10 @@ end
 function plot_shift(dms_shift::DataFrame, Jtab::DataFrame,
     dfit_prot::DataFrame, cdiff_prot::DataFrame, clade_pair::Tuple{S,S};
     cnt_thr1::Float64=40.0,
-    cnt_thr2::Float64=20.0) where S<:AbstractString
+    cnt_thr2::Float64=20.0,
+    doms_label::Vector{S1}=["NTD", "RBD", "CTD1", "CTD2", "FP", "HR1", "CH", "CD", "HR2"],
+    doms_edges::Vector{UnitRange{Int}}=[14:305, 319:541, 542:590, 591:690, 788:806, 910:984, 985:1034, 1035:1067, 1163:1212],
+    doms_col::Vector{S1}=["cyan", "blue", "orange", "yellow", "red", "green", "lightgreen", "hotpink", "violet"]) where {S<:AbstractString,S1<:AbstractString}
 
     # Merge DMS shifts and fitness discrepancies
     shift_dfit = merge_dms_dfit(
@@ -40,6 +43,7 @@ function plot_shift(dms_shift::DataFrame, Jtab::DataFrame,
     )
 
     muts = shift_dfit.mutation # overlap mutations
+    res_index_vec = parse.(Int, map(x -> x[2:end-1], muts))
     j_ddf = SC2Epistasis.mutcp_ddf(Jtab, muts, cdiff_prot, clade_pair[1], clade_pair[2]) # model predicted fitness discrepancies
     cld_shift = clade_pair[1]
     cld_comp = clade_pair[2]
@@ -48,7 +52,21 @@ function plot_shift(dms_shift::DataFrame, Jtab::DataFrame,
     shift = shift_dfit[!, key1] .- shift_dfit[!, key2] # experimental shifts
     ρ = cor(shift, j_ddf) # correlation coefficient
 
-    scatter(j_ddf, shift, alpha=0.7, s=10)
+    domains = [(doms_edges[n][1], doms_edges[n][end], doms_label[n], doms_col[n]) for n in eachindex(doms_label)]
+
+    # Color each point by its domain assignment
+    domain_masks = [(res_index_vec .>= start) .& (res_index_vec .<= stop) for (start, stop, _, _) in domains]
+    for (start, stop, label, color) in domains
+        in_domain = (res_index_vec .>= start) .& (res_index_vec .<= stop)
+        if any(in_domain)
+            scatter(j_ddf[in_domain], shift[in_domain], alpha=0.7, s=10, color=color, label=label)
+        end
+    end
+
+    other_domain = .!foldl((acc, mask) -> acc .| mask, domain_masks)
+    if any(other_domain)
+        scatter(j_ddf[other_domain], shift[other_domain], alpha=0.7, s=10, color="lightgrey", label="Other")
+    end
     #title("$(clade_pair[1])-$(clade_pair[2])", fontsize=14)
 
     # Get current axis limits
@@ -85,6 +103,16 @@ function plot_shift(dms_shift::DataFrame, Jtab::DataFrame,
     text(best_pos[1], best_pos[2], "ρ = " * string(round(ρ, digits=2)),
         fontsize=12, transform=ax.transAxes,
         verticalalignment=best_pos[3], horizontalalignment=best_pos[4])
+
+    # Legend for domain-color mapping
+    legend_handles = [mpatches.Patch(color=color, label=label) for (_, _, label, color) in domains]
+    legend_entries = [label for (_, _, label, _) in domains]
+    if any(other_domain)
+        push!(legend_handles, mpatches.Patch(color="lightgrey", label="Other"))
+        push!(legend_entries, "Other")
+    end
+    legend(legend_handles, legend_entries, title="Domain", fontsize=10, title_fontsize=11,
+        loc="upper left", bbox_to_anchor=(1.02, 1.0), borderaxespad=0.0, frameon=true)
 
     xlabel("ΔΔϕ", fontsize=14)
     ylabel("Experimental fitness shift", fontsize=14)
