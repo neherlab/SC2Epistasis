@@ -163,6 +163,18 @@ function dist_res(res1::Int64, res2::Int64, pdbs::Vector{PdbTool.Pdb}, af_pdb::P
 
 end
 
+# Function to compute 3D distance according to a single AlphaFold structure
+function dist_res(i::Int, j::Int, pdb::PdbTool.Pdb; chain::String="A")
+
+    res1 = pdb.chain[chain].residue[string(i)]
+    res2 = pdb.chain[chain].residue[string(j)]
+
+    dist = PdbTool.residueDist(res1, res2)
+
+    return dist
+
+end
+
 # Random benchmark: for a given pair of clades generates random mismtaches on the protein chain.
 # It then computes the fraction of sites with z-score above threshold for which a mismatch is found
 # in spheres of increasing radii. 

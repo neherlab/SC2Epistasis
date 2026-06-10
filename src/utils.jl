@@ -118,9 +118,9 @@ function read_pdbs(ref_file::String)
 
     # Read PDB files
     pdbs = PdbTool.Pdb[]
-    for file in readdir("data/PDB/")
+    for file in readdir("data/PDB/Spike/")
         if endswith(file, ".pdb")
-            push!(pdbs, PdbTool.parsePdb("data/PDB/" * file))
+            push!(pdbs, PdbTool.parsePdb("data/PDB/Spike/" * file))
         end
     end
 
@@ -190,6 +190,31 @@ function threedist(optx::Vector{OptX}, data::Vector{Data}, pdbs::Vector{PdbTool.
     end
 
     return dist
+
+end
+
+# Compute distances between all residues of putative couplings for a single AF structure
+function threedist(optx::Vector{OptX}, data::Vector{Data}, af_pdb::PdbTool.Pdb)
+
+    M = length(data)
+
+    mut_site = [parse(Int64, data[m].dfit_mut.aa_mut[1][2:end-1]) for m in 1:M]
+    j_dim = sum([optx[m].num_j for m in 1:M])
+
+    d = zeros(Float64, j_dim)
+
+    counter = 0
+    for m in 1:M
+        i = mut_site[m]
+        for j in sort(collect(keys(optx[m].site_aa)))
+            for aa in optx[m].site_aa[j]
+                counter += 1
+                d[counter] = SC2Epistasis.dist_res(i, j, af_pdb)
+            end
+        end
+    end
+
+    return d
 
 end
 
