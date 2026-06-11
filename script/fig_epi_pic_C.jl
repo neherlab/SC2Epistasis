@@ -8,7 +8,7 @@ include("z_clades_regions.jl")
 
 
 # Make plot
-fig, ax = subplots(2, 1, figsize=(6.5, 8), sharex=true)
+fig, ax = subplots(2, 1, figsize=(6, 9), sharex=true)
 
 # Top histogram
 ax[1].hist(z_clades, bins=40, density=true, alpha=0.8, label="Clades", edgecolor="black");

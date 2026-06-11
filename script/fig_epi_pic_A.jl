@@ -28,6 +28,9 @@ n = length(dfit_c1c2.fit1)
 fig, ax = subplots(figsize=(5, 5))
 ax.scatter(dfit_c1c2.fit1, dfit_c1c2.fit2, s=12, alpha=0.4, rasterized=true)
 ax.scatter(dfit_c1c2.fit1[idx_mut], dfit_c1c2.fit2[idx_mut], s=12, color="red")
+ax.scatter(dfit_c1c2.fit1[idx_mut], dfit_c1c2.fit2[idx_mut], s=120, facecolors="none", edgecolors="red", linewidths=1.5)
+ax.annotate(mut, (dfit_c1c2.fit1[idx_mut][1], dfit_c1c2.fit2[idx_mut][1]),
+    xytext=(8, 8), textcoords="offset points", fontsize=11, color="red")
 diag = collect(fmin:0.2:fmax)
 shift = 0.2
 ax.set_xlim(fmin - shift, fmax + shift)

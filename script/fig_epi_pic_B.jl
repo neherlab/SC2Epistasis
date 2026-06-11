@@ -14,7 +14,7 @@ end
 
 function plot_jdfit(jdfit; markersize=60, alpha=0.7)
 
-    fig, ax = subplots(figsize=(6, 7))
+    fig, ax = subplots(figsize=(6, 4))
     n_c = length(jdfit.clades)
     aa = unique(jdfit.sj)
     n_aa = length(aa)
@@ -34,10 +34,10 @@ function plot_jdfit(jdfit; markersize=60, alpha=0.7)
     end
     ax.tick_params(axis="y", labelsize=12)
     ax.set_xticks([x[end], x[1]])
-    ax.set_xticklabels(["σⱼ=S", "σⱼ=R"], fontsize=16)
+    ax.set_xticklabels(["Background σⱼ=S", "σⱼ=R"], fontsize=16)
     ax.set_xlim(-0.25, 1.25)
-    ax.set_ylabel("Δf($(jdfit.si_wt) → $(jdfit.si))", fontsize=16)
-    ax.legend(leg, fontsize=13, loc="upper left")
+    ax.set_ylabel("Mutation effect Δf($(jdfit.si_wt) → $(jdfit.si))", fontsize=16)
+    # ax.legend(leg, fontsize=13, loc="upper left")
 
     fig.tight_layout()
 
