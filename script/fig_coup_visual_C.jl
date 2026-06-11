@@ -3,18 +3,20 @@
 # Import packages
 using DataFrames, CSV, PyPlot
 
+symbol_size = 20
+
 # Plotting function
 function plot_int_num(dist::Vector{Int}, int_num::Vector{Vector{Float64}}, coeffs::Vector{Float64})
 
     @assert length(int_num) == length(coeffs)
 
-    scatter(dist, int_num[1], s=14, alpha=0.8, label=L"\Delta\Delta\phi_{\mathrm{thr}}=1,\,\propto 3")
+    scatter(dist, int_num[1], s=symbol_size, alpha=0.8, label=L"\Delta\Delta\phi_{\mathrm{thr}}=1,\,\propto 3")
     plot(dist, coeffs[1] .* dist, color="C0", alpha=0.7, label="_nolegend_")
 
-    scatter(dist, int_num[2], s=14, alpha=0.8, label=L"\Delta\Delta\phi_{\mathrm{thr}}=1.5,\,\propto 1.5")
+    scatter(dist, int_num[2], s=symbol_size, alpha=0.8, label=L"\Delta\Delta\phi_{\mathrm{thr}}=1.5,\,\propto 1.5")
     plot(dist, coeffs[2] .* dist, color="C1", alpha=0.7, label="_nolegend_")
 
-    scatter(dist, int_num[3], s=14, alpha=0.8, label=L"\Delta\Delta\phi_{\mathrm{thr}}=2,\,\propto 0.7")
+    scatter(dist, int_num[3], s=symbol_size, alpha=0.8, label=L"\Delta\Delta\phi_{\mathrm{thr}}=2,\,\propto 0.7")
     plot(dist, coeffs[3] .* dist, color="C2", alpha=0.7, label="_nolegend_")
 
     xlabel("Number of mismatches", fontsize=12)
@@ -55,7 +57,7 @@ end
 muts = dfit_prot[(dfit_prot.clade1.==cpairs[1][1]).&(dfit_prot.clade2.==cpairs[1][2]), :aa_mut]
 for c in eachindex(cpairs)[2:end]
     m = dfit_prot[(dfit_prot.clade1.==cpairs[c][1]).&(dfit_prot.clade2.==cpairs[c][2]), :aa_mut]
-    muts = intersect(muts, m)
+    global muts = intersect(muts, m)
 end
 
 # Populate ΔJ vectors for each clade pair

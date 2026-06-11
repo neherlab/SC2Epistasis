@@ -2,7 +2,7 @@
 
 # Import packages
 using DataFrames, CSV, PyPlot, PyCall
-mpatches = pyimport("matplotlib.patches") # import from matplotlib to draw boxes
+@isdefined(mpatches) || (const mpatches = pyimport("matplotlib.patches")) # import from matplotlib to draw boxes
 
 # Plotting function
 function plot_coup_map(Jmat::Vector{Vector{Union{Float64,Vector{Int64}}}};
@@ -14,16 +14,21 @@ function plot_coup_map(Jmat::Vector{Vector{Union{Float64,Vector{Int64}}}};
     box_height::Float64=0.06,
     box_width::Float64=0.06) where {S<:AbstractString}
 
-    idx_i = [Jmat[k][1][1] for k in 1:idx_max]
-    idx_j = [Jmat[k][1][2] for k in 1:idx_max]
-    Jval = [Jmat[k][2] for k in 1:idx_max]
+    idx_i = [Jmat[k][1][1] for k in idx_max:-1:1]
+    idx_j = [Jmat[k][1][2] for k in idx_max:-1:1]
+    Jval = [Jmat[k][2] for k in idx_max:-1:1]
 
     domains = [(doms_edges[n][1], doms_edges[n][end], doms_label[n], doms_col[n]) for n in eachindex(doms_label)]
 
     fig, ax = subplots(figsize=(10, 8))
 
     # --- scatter plot ---
-    pc = ax.scatter(idx_i, idx_j, c=log.(Jval), s=5, alpha=0.8)
+    mcolors = pyimport("matplotlib.colors")
+    mcm = pyimport("matplotlib.cm")
+    np = pyimport("numpy")
+    cmap = mcolors.LinearSegmentedColormap.from_list(
+        "trunc_YlOrRd", mcm.YlOrRd(np.linspace(0.3, 1.0, 256)))
+    pc = ax.scatter(idx_i, idx_j, c=log.(Jval), s=70*log.(Jval) + 5.0*ones(length(Jval)), alpha=0.6, cmap=cmap)
     ax.set_xlim([1, L + 12])
     ax.set_ylim([1, L + 12])
     ax.set_xlabel("Mutated residue i", fontsize=16, labelpad=60)

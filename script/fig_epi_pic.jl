@@ -15,7 +15,7 @@ function format_legend(label_vec::Vector{S}, group_size::Int=10) where {S<:Abstr
     return join(groups, "\n")
 end
 
-function plot_jdfit!(ax, jdfit; markersize=60, alpha=0.7)
+function plot_jdfit!(ax, jdfit; markersize=60, alpha=0.7, label_fs=12)
     n_c = length(jdfit.clades)
     aa = unique(jdfit.sj)
     n_aa = length(aa)
@@ -31,9 +31,10 @@ function plot_jdfit!(ax, jdfit; markersize=60, alpha=0.7)
     end
     ax.tick_params(axis="y", labelsize=12)
     ax.set_xticks([x[end], x[1]])
-    ax.set_xticklabels(["Background σⱼ=S", "σⱼ=R"], fontsize=16)
+    ax.set_xticklabels(["σⱼ=S", "σⱼ=R"], fontsize=label_fs)
     ax.set_xlim(-0.25, 1.25)
-    ax.set_ylabel("Mutation effect Δf($(jdfit.si_wt) → $(jdfit.si))", fontsize=16)
+    ax.set_ylabel("Mutation effect Δf($(jdfit.si_wt) → $(jdfit.si))", fontsize=label_fs)
+    ax.set_xlabel("Background", fontsize=label_fs)
 end
 
 ###########################################------------------------------------
@@ -64,6 +65,8 @@ jdfit = SC2Epistasis.coup_dfit(Jtab, dfit_prot, cdiff_prot, [mut], [res])[1]
 
 ###########################################------------------------------------
 
+label_fs = 14  # axis label fontsize for all panels
+
 # Build figure: 2 rows x 2 cols
 # Col 0: A (top), B (bottom)
 # Col 1: C_top and C_bot tightly stacked, sharing x-axis
@@ -88,13 +91,13 @@ ax_A.annotate(mut, (dfit_c1c2.fit1[idx_mut][1], dfit_c1c2.fit2[idx_mut][1]),
 ax_A.set_xlim(fmin - shift, fmax + shift)
 ax_A.set_ylim(fmin - shift, fmax + shift)
 ax_A.plot(diag, diag, color="orange")
-ax_A.set_xlabel(clade_pair[1] * " (Delta) fitness effect", fontweight="bold", fontsize=12)
-ax_A.set_ylabel(clade_pair[2] * " (Omicron BA.2) fitness effect", fontweight="bold", fontsize=12)
+ax_A.set_xlabel(clade_pair[1] * " (Delta) fitness effect", fontsize=label_fs)
+ax_A.set_ylabel(clade_pair[2] * " (BA.2) fitness effect", fontsize=label_fs)
 ax_A.text(0.2, 0.85, "r = " * @sprintf("%.2f", r) * "\nn = " * string(n),
     fontsize=12, transform=ax_A.transAxes)
 
 # Panel B
-plot_jdfit!(ax_B, jdfit; markersize=60, alpha=0.7)
+plot_jdfit!(ax_B, jdfit; markersize=60, alpha=0.7, label_fs=label_fs)
 
 # Panel C — top histogram (no x-tick labels, shared with bottom)
 ax_C1.hist(z_clades, bins=40, density=true, alpha=0.8, label="Clades", edgecolor="black")
@@ -108,13 +111,13 @@ ax_C1.set_yscale("log")
 ax_C2.hist(z_nsyn, bins=50, alpha=0.6, density=true, label="Non-synonymous")
 ax_C2.hist(z_syn, bins=50, alpha=0.5, density=true, label="Synonymous")
 ax_C2.hist(z_stop, bins=50, alpha=0.4, density=true, label="Stop codon")
-ax_C2.set_xlabel("Fitness z-score", fontsize=16)
+ax_C2.set_xlabel("Fitness z-score", fontsize=label_fs)
 ax_C2.legend(fontsize=11)
 ax_C2.tick_params(axis="both", labelsize=14)
 ax_C2.set_yscale("log")
 
 # Common y-label for C panels (positioned at mid-height of the right column)
-fig.text(0.5, 0.5, "Density", va="center", rotation="vertical", fontsize=16)
+fig.text(0.5, 0.5, "Density", va="center", rotation="vertical", fontsize=label_fs)
 
 # Panel labels
 for (ax, lbl) in zip([ax_A, ax_B, ax_C1], ["A", "B", "C"])

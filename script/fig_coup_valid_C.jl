@@ -2,7 +2,7 @@
 
 # Import packages
 using DataFrames, CSV, PyPlot, Statistics
-const mpatches = PyPlot.PyCall.pyimport("matplotlib.patches")
+@isdefined(mpatches) || (const mpatches = PyPlot.PyCall.pyimport("matplotlib.patches"))
 # Functions
 
 # Merge clade-pair specific and epistatic shifts dataframes
