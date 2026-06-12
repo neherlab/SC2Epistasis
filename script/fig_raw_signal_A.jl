@@ -49,6 +49,8 @@ function plot_raw_zscores_bands(cp_list::Vector{Tuple{S1,S1}},
         ax.vlines(site_diff, 0.0, global_max, color="orange", zorder=3)
         ax.set_ylabel(cp_plt[1] * "-" * cp_plt[2], fontsize=14, labelpad=10, rotation=90, ha="left", va="center")
         ax.yaxis.set_label_position("right")  # moves labels to the right side of the subplots
+        ax.text(0.98, 0.97, cp_plt[1] * "-" * cp_plt[2], transform=ax.transAxes,
+            fontsize=13, fontweight="bold", ha="right", va="top")
 
         # set common y-axis limit
         ax.set_ylim(-0.2, y_max)
