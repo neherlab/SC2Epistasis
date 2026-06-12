@@ -2,13 +2,17 @@
 
 function plot_sphere_frac(cp_plt::Vector{Tuple{S1,S1}}, frac::Vector{Matrix{Float64}}, rnd_frac::Vector{Vector{Float64}};
     radii::Vector{Float64}=[5.0, 8.0, 10.0, 12.0, 15.0, 20.0],
-    z_thr::Vector{Vector{Float64}}=[[1.75, 2.0, 2.25], [1.25, 1.5, 1.75], [1.5, 1.75, 2.0], [1.5, 1.75, 2.0]]) where {S1<:AbstractString}
+    z_thr::Vector{Vector{Float64}}=[[1.75, 2.0, 2.25], [1.25, 1.5, 1.75], [1.5, 1.75, 2.0], [1.5, 1.75, 2.0]],
+    fig=nothing, axs=nothing) where {S1<:AbstractString}
 
+    standalone = isnothing(fig)
     n = length(cp_plt)  # number of clade pairs to be plotted
 
-    fig, axs = subplots(n, 1, figsize=(4.5, 3.5 * n), sharex=true)
-    if n == 1
-        axs = [axs]
+    if standalone
+        fig, axs = subplots(n, 1, figsize=(4.5, 3.5 * n), sharex=true)
+        if n == 1
+            axs = [axs]
+        end
     end
 
     for (i, cpair) in enumerate(cp_plt)
@@ -40,11 +44,10 @@ function plot_sphere_frac(cp_plt::Vector{Tuple{S1,S1}}, frac::Vector{Matrix{Floa
 
     end
 
-    # Then adjust margins to accommodate the common y-axis label and right-side labels
-    fig.tight_layout(rect=(0.02, 0.025, 0.87, 0.98))
-
-    # common y-axis label on the right side
-    fig.text(0.92, 0.5, "Fraction of " * L"i\;" * "s.t. " * L"\exists j:\:d(i,j) < d_{thr}", va="center", rotation="vertical", fontsize=16)
+    if standalone
+        fig.tight_layout(rect=(0.02, 0.025, 0.87, 0.98))
+        fig.text(0.92, 0.5, "Fraction of " * L"i\;" * "s.t. " * L"\exists j:\:d(i,j) < d_{thr}", va="center", rotation="vertical", fontsize=16)
+    end
 
     # bottom x-axis
     axs[end].set_xlabel("Sphere radius (Å)", fontsize=16)
@@ -56,13 +59,17 @@ end
 
 function plot_sphere_frac_vs_z(cp_plt::Vector{Tuple{S1,S1}}, frac_z::Vector{Matrix{Float64}},
     z_thr_range::Vector{Float64}, rnd_frac::Vector{Vector{Float64}};
-    radii_sel::Vector{Float64}=[8.0, 15.0]) where {S1<:AbstractString}
+    radii_sel::Vector{Float64}=[8.0, 15.0],
+    fig=nothing, axs=nothing) where {S1<:AbstractString}
 
+    standalone = isnothing(fig)
     n = length(cp_plt)
 
-    fig, axs = subplots(n, 1, figsize=(4.5, 3.5 * n), sharex=true)
-    if n == 1
-        axs = [axs]
+    if standalone
+        fig, axs = subplots(n, 1, figsize=(4.5, 3.5 * n), sharex=true)
+        if n == 1
+            axs = [axs]
+        end
     end
 
     for (i, cpair) in enumerate(cp_plt)
@@ -85,8 +92,10 @@ function plot_sphere_frac_vs_z(cp_plt::Vector{Tuple{S1,S1}}, frac_z::Vector{Matr
         end
     end
 
-    fig.tight_layout(rect=(0.02, 0.025, 0.87, 0.98))
-    fig.text(0.92, 0.5, "Fraction of " * L"i\;" * "s.t. " * L"\exists j:\:d(i,j) < d_{thr}", va="center", rotation="vertical", fontsize=16)
+    if standalone
+        fig.tight_layout(rect=(0.02, 0.025, 0.87, 0.98))
+        fig.text(0.92, 0.5, "Fraction of " * L"i\;" * "s.t. " * L"\exists j:\:d(i,j) < d_{thr}", va="center", rotation="vertical", fontsize=16)
+    end
     axs[end].set_xlabel("z-score threshold", fontsize=16)
     axs[end].tick_params(axis="x", labelsize=11)
 

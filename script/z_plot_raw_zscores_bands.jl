@@ -12,8 +12,10 @@ function plot_raw_zscores_bands(cp_list::Vector{Tuple{S1,S1}},
     doms_edges::Vector{UnitRange{Int}}=[14:305, 319:541, 542:590, 591:690, 788:806, 910:984, 985:1034, 1035:1067, 1163:1212],
     doms_col::Vector{S1}=["cyan", "blue", "orange", "yellow", "red", "green", "lightgreen", "hotpink", "violet"],
     box_height::Float64=0.12,
-    rasterized=true) where {S1<:AbstractString,S2<:AbstractString}
+    rasterized=true,
+    fig=nothing, axs=nothing) where {S1<:AbstractString,S2<:AbstractString}
 
+    standalone = isnothing(fig)
     n = length(cp_list)
     L = maximum([maximum(s_dict[cp]) for cp in cp_list])  # protein length
 
@@ -23,9 +25,11 @@ function plot_raw_zscores_bands(cp_list::Vector{Tuple{S1,S1}},
     global_max = maximum([maximum(z_dict[cp]) for cp in cp_list])
     y_max = global_max * 1.05   # add 5% margin
 
-    fig, axs = subplots(n, 1, figsize=(12, 3.5 * n), sharex=true)
-    if n == 1
-        axs = [axs]
+    if standalone
+        fig, axs = subplots(n, 1, figsize=(12, 3.5 * n), sharex=true)
+        if n == 1
+            axs = [axs]
+        end
     end
 
     for (i, cp_plt) in enumerate(cp_list)
@@ -62,8 +66,10 @@ function plot_raw_zscores_bands(cp_list::Vector{Tuple{S1,S1}},
         ax.legend([legend_str], loc="best", markerscale=0, handlelength=0, fontsize=10)
     end
 
-    # common y-axis label
-    fig.text(0.04, 0.5, "Average fitness z-score", va="center", rotation="vertical", fontsize=16)
+    # common y-axis label (standalone only; composite caller places it)
+    if standalone
+        fig.text(0.04, 0.5, "Average fitness z-score", va="center", rotation="vertical", fontsize=16)
+    end
 
     # bottom x-axis
     axs[end].set_xlabel("Residue", fontsize=16, labelpad=60)  # push further down
@@ -143,9 +149,10 @@ function plot_raw_zscores_bands(cp_list::Vector{Tuple{S1,S1}},
     # --- main axis label further below everything ---
     axs[end].set_xlabel("Residue", fontsize=16, labelpad=55)
 
-    # --- ensure enough margin ---
-    fig.subplots_adjust(bottom=0.35, left=0.12, hspace=0.3)
-    fig.tight_layout(rect=[0.06, 0, 1, 1])
+    if standalone
+        fig.subplots_adjust(bottom=0.35, left=0.12, hspace=0.3)
+        fig.tight_layout(rect=[0.06, 0, 1, 1])
+    end
 
     return fig, axs
 
