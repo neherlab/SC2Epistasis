@@ -7,7 +7,7 @@ function plot_raw_zscores_bands(cp_list::Vector{Tuple{S1,S1}},
     z_dict::Dict{Tuple{S2,S2},Vector{Float64}},
     s_dict::Dict{Tuple{S2,S2},Vector{Int}},
     cdiff::DataFrame;
-    x_space::Int=50,
+    x_space::Int=100,
     doms_label::Vector{S1}=["NTD", "RBD", "CTD1", "CTD2", "FP", "HR1", "CH", "CD", "HR2"],
     doms_edges::Vector{UnitRange{Int}}=[14:305, 319:541, 542:590, 591:690, 788:806, 910:984, 985:1034, 1035:1067, 1163:1212],
     doms_col::Vector{S1}=["cyan", "blue", "orange", "yellow", "red", "green", "lightgreen", "hotpink", "violet"],
@@ -68,7 +68,7 @@ function plot_raw_zscores_bands(cp_list::Vector{Tuple{S1,S1}},
     # bottom x-axis
     axs[end].set_xlabel("Residue", fontsize=16, labelpad=60)  # push further down
     axs[end].set_xticks(collect(0:x_space:L))
-    axs[end].xaxis.set_tick_params(labelsize=10)
+    axs[end].xaxis.set_tick_params(labelsize=12)
 
     # --- domain boxes positioning ---
     y_bottom = -(box_height + 0.0025)  # position so top edge touches the axis
@@ -121,9 +121,10 @@ function plot_raw_zscores_bands(cp_list::Vector{Tuple{S1,S1}},
     # make it share the same x-limits
     ax_ticks.set_xlim(axs[end].get_xlim())
 
-    # match the ticks of the main axis
-    ax_ticks.set_xticks(axs[end].get_xticks())
-    ax_ticks.set_xticklabels(axs[end].get_xticklabels(), fontsize=10)
+    # explicit ticks at 0, 100, 200, ... L
+    xticks = collect(0:x_space:L)
+    ax_ticks.set_xticks(xticks)
+    ax_ticks.set_xticklabels([string(t) for t in xticks])
 
     # position this new axis at the bottom edge of the boxes
     ax_ticks.spines["top"].set_position(("axes", y_bottom - 0.015))
@@ -134,7 +135,7 @@ function plot_raw_zscores_bands(cp_list::Vector{Tuple{S1,S1}},
     end
 
     # show ticks on top (which is positioned at bottom of boxes) and add padding for labels
-    ax_ticks.tick_params(axis="x", which="both", top=true, bottom=false, pad=-15)
+    ax_ticks.tick_params(axis="x", which="both", top=true, bottom=false, pad=-21, labelsize=14)
 
     # --- hide ticks and labels from the main x-axis (keep the spine line) ---
     axs[end].tick_params(axis="x", which="both", bottom=false, labelbottom=false)

@@ -20,7 +20,7 @@ clade_diff = clade_diff[clade_diff.prot.==prot, :]
 cp_plt = [("21K", "22B"), ("21K", "23A"), ("21L", "22B"), ("21L", "23A")]
 
 # Make plots
-fig, _ = plot_raw_zscores_bands(cp_plt, z_dict, s_dict, clade_diff; x_space=55, rasterized=false)
+fig, _ = plot_raw_zscores_bands(cp_plt, z_dict, s_dict, clade_diff; x_space=100, rasterized=false)
 
 # Save figure
 fig.savefig("results/figures/si/fig_s2_A.pdf", dpi=300)

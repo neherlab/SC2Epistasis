@@ -4,45 +4,6 @@
 using DataFrames, CSV, JLD2, PyPlot, PdbTool
 include("z_plot_sphere_frac.jl")
 
-function plot_sphere_frac_vs_z(cp_plt::Vector{Tuple{S1,S1}}, frac_z::Vector{Matrix{Float64}},
-    z_thr_range::Vector{Float64}, rnd_frac::Vector{Vector{Float64}};
-    radii_sel::Vector{Float64}=[8.0, 15.0]) where {S1<:AbstractString}
-
-    n = length(cp_plt)
-
-    fig, axs = subplots(n, 1, figsize=(4.5, 3.5 * n), sharex=true)
-    if n == 1
-        axs = [axs]
-    end
-
-    for (i, cpair) in enumerate(cp_plt)
-        ax = axs[i]
-
-        for (k, r) in enumerate(radii_sel)
-            ax.plot(z_thr_range, frac_z[i][k, :], ".-", label="r = $(Int(r)) Å", color="C$(k-1)")
-            ax.axhline(rnd_frac[i][k], linestyle="--", color="C$(k-1)", alpha=0.6, label="Random r = $(Int(r)) Å")
-        end
-
-        # ax.set_ylabel(cpair[1] * "-" * cpair[2], fontsize=14, labelpad=18, rotation=90, ha="left", va="center")
-        ax.yaxis.tick_right()
-        ax.tick_params(axis="y", labelsize=11)
-        ax.set_ylim(0.0, 1.05)
-        ax.legend(fontsize=13)
-
-        if i != n
-            ax.tick_params(labelbottom=false)
-        end
-    end
-
-    fig.tight_layout(rect=(0.02, 0.025, 0.87, 0.98))
-    fig.text(0.92, 0.5, "Fraction of " * L"i\;" * "s.t. " * L"\exists j:\:d(i,j) < d_{thr}", va="center", rotation="vertical", fontsize=16)
-    axs[end].set_xlabel("z-score threshold", fontsize=16)
-    axs[end].tick_params(axis="x", labelsize=11)
-
-    return fig, axs
-
-end
-
 ###############################---------------------------------
 
 # Script body

@@ -46,3 +46,18 @@ end
 fig, ax = plot_sphere_frac(cp_plt, frac_vec, rnd_frac; radii=radii, z_thr=z_thr)
 fig.savefig("results/figures/si/fig_s2_B.pdf")
 close(fig)
+
+# --- Fraction vs z-score for two fixed radii ---
+radii_sel = [8.0, 15.0]
+z_thr_range = collect(0.5:0.1:2.0)
+
+frac_vec_z = [zeros(Float64, length(radii_sel), length(z_thr_range)) for i in eachindex(cp_plt)]
+rnd_frac_z = [zeros(Float64, length(radii_sel)) for i in eachindex(cp_plt)]
+for i in eachindex(cp_plt)
+    frac_vec_z[i] = SC2Epistasis.frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff, pdbs, af_pdb, radii_sel, z_thr_range)
+    rnd_frac_z[i], _ = SC2Epistasis.rand_frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff, pdbs, af_pdb, radii_sel, var_sites; z_thr=z_thr_range[1], nsamp=100)
+end
+
+fig2, ax2 = plot_sphere_frac_vs_z(cp_plt, frac_vec_z, z_thr_range, rnd_frac_z; radii_sel=radii_sel)
+fig2.savefig("results/figures/si/fig_s2_B_vs_z.pdf")
+close(fig2)
