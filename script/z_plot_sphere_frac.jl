@@ -25,7 +25,7 @@ function plot_sphere_frac(cp_plt::Vector{Tuple{S1,S1}}, frac::Vector{Matrix{Floa
         ax.plot(radii, rnd_frac[i], ".-")
 
         # Subplot clade pair as y-axis label
-        ax.set_ylabel(cpair[1] * "-" * cpair[2], fontsize=14, labelpad=18, rotation=90, ha="left", va="center")
+        # ax.set_ylabel(cpair[1] * "-" * cpair[2], fontsize=14, labelpad=18, rotation=90, ha="left", va="center")
 
         # Move y-tick labels to the right and increase fontsize
         ax.yaxis.tick_right()

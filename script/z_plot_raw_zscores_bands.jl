@@ -68,7 +68,7 @@ function plot_raw_zscores_bands(cp_list::Vector{Tuple{S1,S1}},
 
     # common y-axis label (standalone only; composite caller places it)
     if standalone
-        fig.text(0.04, 0.5, "Average fitness z-score", va="center", rotation="vertical", fontsize=16)
+        fig.text(0.08, 0.5, "Average fitness z-score", va="center", rotation="vertical", fontsize=16)
     end
 
     # bottom x-axis
