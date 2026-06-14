@@ -31,7 +31,7 @@ var_sites = site_shannon_ent.position[site_shannon_ent.entropy.>=0.01]
 radii     = [5.0, 8.0, 10.0, 12.0, 15.0, 20.0]
 radii_sel = [8.0, 15.0]
 z_thr_range = collect(0.5:0.1:2.0)
-nsamples = 2
+nsamples = 100
 
 ###############################---------------------------------
 
