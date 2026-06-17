@@ -34,7 +34,7 @@ function plot_jdfit!(axs_flat, jdfit_muts)
         adjustText.adjust_text(texts, ax=ax, only_move=Dict("text" => "xy", "points" => ""),
             force_text=(0.8, 0.8), force_points=(1.5, 1.5),
             expand_text=(1.5, 1.5), expand_points=(2.0, 2.0))
-        ax.set_box_aspect(4 / 3)
+        ax.set_box_aspect(3 / 3)
         ax.set_xlabel("i=$(jdfit.i), j=$(jdfit.j)", fontsize=14)
         ax.set_ylabel("Δf($(jdfit.si_wt) → $(jdfit.si))", fontsize=14)
         ax.tick_params(labelsize=12)
@@ -164,7 +164,7 @@ cpair = ("21J", "21K")
 # Build composite figure: 2 rows × 3 cols
 # Cols 0-1: A's 2×2 subplots; col 2: B (top) and C (bottom)
 fig = figure(figsize=(16, 10))
-gs = fig.add_gridspec(2, 3, width_ratios=[6, 6, 6], hspace=0.22, wspace=0.02)
+gs = fig.add_gridspec(2, 3, width_ratios=[5, 5, 6], hspace=0.24, wspace=0.22)
 
 axs_A = [fig.add_subplot(gs[i, j]) for i in 1:2, j in 1:2]
 axs_A_flat = vec(axs_A)  # row-major: [A[1,1], A[1,2], A[2,1], A[2,2]]
@@ -178,7 +178,7 @@ plot_shift!(ax_C, dms_shift, Jtab, dfit_prot, cdiff_prot, cpair)
 
 # Super-labels for A
 fig.text(0.38, 0.01, "Coupling J", ha="center", fontsize=16)
-fig.text(0.08, 0.5, "Mutation Δf", va="center", rotation="vertical", fontsize=16)
+fig.text(0.05, 0.5, "Mutation Δf", va="center", rotation="vertical", fontsize=16)
 
 # Panel labels
 axs_A_flat[1].text(-0.10, 1.02, "A", transform=axs_A_flat[1].transAxes, fontsize=18, fontweight="bold", va="bottom")

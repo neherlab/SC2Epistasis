@@ -77,7 +77,7 @@ function plot_sphere_frac_vs_z(cp_plt::Vector{Tuple{S1,S1}}, frac_z::Vector{Matr
 
         for (k, r) in enumerate(radii_sel)
             ax.plot(z_thr_range, frac_z[i][k, :], ".-", label="r = $(Int(r)) Å", color="C$(k-1)")
-            ax.axhline(rnd_frac[i][k], linestyle="--", color="C$(k-1)", alpha=0.6, label="Random r = $(Int(r)) Å")
+            ax.axhline(rnd_frac[i][k], linestyle="--", color="C$(k-1)", alpha=0.6) #, label="Random r = $(Int(r)) Å")
         end
 
         ax.yaxis.tick_right()
