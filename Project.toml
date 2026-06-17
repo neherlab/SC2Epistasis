@@ -1,12 +1,13 @@
 name = "SC2Epistasis"
 uuid = "104adb4b-e677-417f-8cbd-e01020aa1842"
-authors = ["Luca Sesta <lucasesta95@gmail.com>"]
 version = "0.1.0"
+authors = ["Luca Sesta <lucasesta95@gmail.com>"]
 
 [deps]
 BioAlignments = "00701ae9-d1dc-5365-b64a-a3a3ebf5695e"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
+Conda = "8f4d0f93-b110-5947-807f-2305c1781a2d"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 HypothesisTests = "09f84164-cd44-5f33-b23f-e6b0d136a0d5"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
@@ -21,6 +22,7 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 BioAlignments = "3.1.0"
 CSV = "0.10.15"
 Combinatorics = "1.0.3"
+Conda = "1.10.3"
 DataFrames = "1.8.0"
 HypothesisTests = "0.11.5"
 JLD2 = "0.6.2"
