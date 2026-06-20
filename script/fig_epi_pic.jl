@@ -124,5 +124,5 @@ for (ax, lbl) in zip([ax_A, ax_B, ax_C1], ["A", "B", "C"])
     ax.text(-0.12, 1.02, lbl, transform=ax.transAxes, fontsize=16, fontweight="bold", va="bottom")
 end
 
-fig.savefig("results/figures/fig_epi_pic.pdf")
+fig.savefig("results/figures/fig_epi_pic.svg", dpi=300)
 close(fig)

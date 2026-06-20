@@ -14,5 +14,5 @@ Jmat = SC2Epistasis.Jmat(Jfrob)
 
 # Plot the coupling map
 fig, ax = plot_coup_map(Jmat; idx_max=400) # only plot top 400 couplings
-savefig("results/figures/fig_coup_visual_A.pdf")
+savefig("results/figures/fig_coup_visual_A.svg")
 close(fig)

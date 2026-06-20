@@ -86,5 +86,5 @@ coeffs = [sum(larger_thresh[n] .* dist) / sum(dist .^ 2) for n in eachindex(thr_
 
 # Make plot
 plot_int_num(dist, larger_thresh, coeffs)
-savefig("results/figures/fig_coup_visual_C.pdf")
+savefig("results/figures/fig_coup_visual_C.svg")
 close("all")

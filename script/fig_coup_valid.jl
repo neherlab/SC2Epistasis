@@ -25,15 +25,22 @@ function plot_jdfit!(axs_flat, jdfit_muts)
             unc = sqrt(sum(jdfit.s_fit[idx[k]] .^ 2) / sum(idx[k]))
             ax.errorbar(jdfit.J[idx[k]][1], av, yerr=unc, fmt="*", markersize=11, elinewidth=2.5, capsize=5, alpha=0.6)
             x_range = maximum(jdfit.J) - minimum(jdfit.J)
-            for c in eachindex(jdfit.clades[idx[k]])
-                x_offset = (jdfit.J[idx[k]][c] < mean(jdfit.J)) ? 0.08 * x_range : -0.08 * x_range
+            for (ci,c) in enumerate(eachindex(jdfit.clades[idx[k]]))
+                if jdfit.J[idx[k]][c]< -0.5
+                    x_offset = 0.03 * x_range
+                elseif jdfit.J[idx[k]][c] > 0.5
+                    x_offset = -0.12 * x_range
+                else
+                    x_offset = ci%2==0 ? 0.03 * x_range  : -0.12 * x_range
+                end
+                # x_offset = (jdfit.J[idx[k]][c] < mean(jdfit.J)) ? 0.03 * x_range : -0.12 * x_range
                 push!(texts, ax.text(jdfit.J[idx[k]][c] + x_offset, jdfit.fit[idx[k]][c],
                     jdfit.clades[idx[k]][c], fontsize=10))
             end
         end
         adjustText.adjust_text(texts, ax=ax, only_move=Dict("text" => "xy", "points" => ""),
-            force_text=(0.8, 0.8), force_points=(1.5, 1.5),
-            expand_text=(1.5, 1.5), expand_points=(2.0, 2.0))
+            force_text=(0.2, 1.2), force_points=(0.5, 0.8),
+            expand_text=(1.2, 1.2), expand_points=(2.0, 2.0))
         ax.set_box_aspect(3 / 3)
         ax.set_xlabel("i=$(jdfit.i), j=$(jdfit.j)", fontsize=14)
         ax.set_ylabel("Δf($(jdfit.si_wt) → $(jdfit.si))", fontsize=14)
@@ -81,19 +88,20 @@ function plot_shift!(ax, dms_shift::DataFrame, Jtab::DataFrame,
     res_index_vec = parse.(Int, map(x -> x[2:end-1], muts))
     j_ddf = SC2Epistasis.mutcp_ddf(Jtab, muts, cdiff_prot, clade_pair[1], clade_pair[2])
     shift = shift_dfit[!, "score_" * clade_pair[1]] .- shift_dfit[!, "score_" * clade_pair[2]]
-    ρ = cor(shift, j_ddf)
 
     domains = [(doms_edges[n][1], doms_edges[n][end], doms_label[n], doms_col[n]) for n in eachindex(doms_label)]
     domain_masks = [(res_index_vec .>= start) .& (res_index_vec .<= stop) for (start, stop, _, _) in domains]
     other_domain = .!foldl((acc, mask) -> acc .| mask, domain_masks)
 
     if any(other_domain)
-        ax.scatter(j_ddf[other_domain], shift[other_domain], alpha=0.7, s=15, color="lightgreen", label="Other")
+        ρ = cor(shift[other_domain], j_ddf[other_domain])
+        ax.scatter(j_ddf[other_domain], shift[other_domain], alpha=0.7, s=15, color="lightgreen", label="Other" * " (ρ=" * string(round(ρ, digits=2)) * ")")
     end
     for (start, stop, label, color) in domains
         in_domain = (res_index_vec .>= start) .& (res_index_vec .<= stop)
+        ρ = cor(shift[in_domain], j_ddf[in_domain])
         if any(in_domain)
-            ax.scatter(j_ddf[in_domain], shift[in_domain], alpha=0.7, s=15, color=color, label=label)
+            ax.scatter(j_ddf[in_domain], shift[in_domain], alpha=0.7, s=15, color=color, label=label * " (ρ=" * string(round(ρ, digits=2)) * ")")
         end
     end
 
@@ -115,18 +123,19 @@ function plot_shift!(ax, dms_shift::DataFrame, Jtab::DataFrame,
             best_pos = pos
         end
     end
-    ax.text(best_pos[1], best_pos[2], "ρ = " * string(round(ρ, digits=2)),
-        fontsize=12, transform=ax.transAxes,
-        verticalalignment=best_pos[3], horizontalalignment=best_pos[4])
+    # ax.text(best_pos[1], best_pos[2], "ρ = " * string(round(ρ, digits=2)),
+    #     fontsize=12, transform=ax.transAxes,
+    #     verticalalignment=best_pos[3], horizontalalignment=best_pos[4])
 
-    legend_handles = [mpatches.Patch(color=color, label=label) for (_, _, label, color) in domains]
-    legend_entries = [label for (_, _, label, _) in domains]
-    if any(other_domain)
-        push!(legend_handles, mpatches.Patch(color="lightgreen", label="Other"))
-        push!(legend_entries, "Other")
-    end
-    ax.legend(legend_handles, legend_entries, title="Domain", fontsize=10, title_fontsize=11,
-        loc="upper left", bbox_to_anchor=(1.02, 1.0), borderaxespad=0.0, frameon=true)
+    # legend_handles = [mpatches.Patch(color=color, label=label) for (_, _, label, color) in domains]
+    # legend_entries = [label for (_, _, label, _) in domains]
+    # if any(other_domain)
+    #     push!(legend_handles, mpatches.Patch(color="lightgreen", label="Other"))
+    #     push!(legend_entries, "Other")
+    # end
+    # ax.legend(legend_handles, legend_entries, title="Domain", fontsize=10, title_fontsize=11,
+    #     loc="upper left", bbox_to_anchor=(1.02, 1.0), borderaxespad=0.0, frameon=true)
+    ax.legend(loc="upper left", fontsize=11, frameon=true)
 
     ax.set_xlabel("Model prediction ΔΔϕ", fontsize=14)
     ax.set_ylabel("Experimental fitness shift", fontsize=14)
