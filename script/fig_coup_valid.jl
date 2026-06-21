@@ -42,7 +42,7 @@ function plot_jdfit!(axs_flat, jdfit_muts)
             force_text=(0.2, 1.2), force_points=(0.5, 0.8),
             expand_text=(1.2, 1.2), expand_points=(2.0, 2.0))
         ax.set_box_aspect(3 / 3)
-        ax.set_xlabel("i=$(jdfit.i), j=$(jdfit.j)", fontsize=14)
+        ax.set_xlabel(" i=$(jdfit.i), j=$(jdfit.j)", fontsize=14)
         ax.set_ylabel("Δf($(jdfit.si_wt) → $(jdfit.si))", fontsize=14)
         ax.tick_params(labelsize=12)
     end
@@ -80,7 +80,8 @@ function plot_shift!(ax, dms_shift::DataFrame, Jtab::DataFrame,
     cnt_thr1::Float64=40.0, cnt_thr2::Float64=20.0,
     doms_label::Vector{S1}=["NTD", "RBD"],
     doms_edges::Vector{UnitRange{Int}}=[14:305, 319:541],
-    doms_col::Vector{S1}=["orange", "blue"]) where {S<:AbstractString,S1<:AbstractString}
+    doms_col::Vector{S1}=["orange", "blue"],
+    doms_marker::Vector{S1}=["s", "^"]) where {S<:AbstractString,S1<:AbstractString}
 
     shift_dfit = merge_dms_dfit(dms_shift, dfit_prot, clade_pair; cnt_thr1=cnt_thr1, cnt_thr2=cnt_thr2)
 
@@ -95,13 +96,13 @@ function plot_shift!(ax, dms_shift::DataFrame, Jtab::DataFrame,
 
     if any(other_domain)
         ρ = cor(shift[other_domain], j_ddf[other_domain])
-        ax.scatter(j_ddf[other_domain], shift[other_domain], alpha=0.7, s=15, color="lightgreen", label="Other" * " (ρ=" * string(round(ρ, digits=2)) * ")")
+        ax.scatter(j_ddf[other_domain], shift[other_domain], alpha=0.7, s=15, color="lightgreen", marker="o", label="Other" * " (ρ=" * string(round(ρ, digits=2)) * ")")
     end
-    for (start, stop, label, color) in domains
+    for (n, (start, stop, label, color)) in enumerate(domains)
         in_domain = (res_index_vec .>= start) .& (res_index_vec .<= stop)
         ρ = cor(shift[in_domain], j_ddf[in_domain])
         if any(in_domain)
-            ax.scatter(j_ddf[in_domain], shift[in_domain], alpha=0.7, s=15, color=color, label=label * " (ρ=" * string(round(ρ, digits=2)) * ")")
+            ax.scatter(j_ddf[in_domain], shift[in_domain], alpha=0.7, s=15, color=color, marker=doms_marker[n], label=label * " (ρ=" * string(round(ρ, digits=2)) * ")")
         end
     end
 
@@ -186,8 +187,8 @@ plot_hist!(ax_B, z_df.av_z, z_df.av_dz)
 plot_shift!(ax_C, dms_shift, Jtab, dfit_prot, cdiff_prot, cpair)
 
 # Super-labels for A
-fig.text(0.38, 0.01, "Coupling J", ha="center", fontsize=16)
-fig.text(0.05, 0.5, "Mutation Δf", va="center", rotation="vertical", fontsize=16)
+fig.text(0.38, 0.01, L"Coupling $J_{ij}$", ha="center", fontsize=16)
+fig.text(0.05, 0.5, L"Mutation $\Delta f_i$", va="center", rotation="vertical", fontsize=16)
 
 # Panel labels
 axs_A_flat[1].text(-0.10, 1.02, "A", transform=axs_A_flat[1].transAxes, fontsize=18, fontweight="bold", va="bottom")

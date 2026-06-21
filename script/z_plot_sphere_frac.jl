@@ -19,10 +19,12 @@ function plot_sphere_frac(cp_plt::Vector{Tuple{S1,S1}}, frac::Vector{Matrix{Floa
         ax = axs[i]
 
         # Plot fraction in sphere and random benchmark
+        _markers = ["o", "s", "^", "D"]
+        _lstyles = ["-", "--", ":", "-."]
         for k in eachindex(z_thr[i])
-            ax.plot(radii, frac[i][:, k], ".-")
+            ax.plot(radii, frac[i][:, k], marker=_markers[k], linestyle=_lstyles[k])
         end
-        ax.plot(radii, rnd_frac[i], ".-")
+        ax.plot(radii, rnd_frac[i], marker="x", linestyle="-.")
 
         # Subplot clade pair as y-axis label
         # ax.set_ylabel(cpair[1] * "-" * cpair[2], fontsize=14, labelpad=18, rotation=90, ha="left", va="center")
@@ -75,9 +77,11 @@ function plot_sphere_frac_vs_z(cp_plt::Vector{Tuple{S1,S1}}, frac_z::Vector{Matr
     for (i, cpair) in enumerate(cp_plt)
         ax = axs[i]
 
+        _markers = ["o", "s"]
+        _lstyles = ["-", "--"]
         for (k, r) in enumerate(radii_sel)
-            ax.plot(z_thr_range, frac_z[i][k, :], ".-", label="r = $(Int(r)) Å", color="C$(k-1)")
-            ax.axhline(rnd_frac[i][k], linestyle="--", color="C$(k-1)", alpha=0.6) #, label="Random r = $(Int(r)) Å")
+            ax.plot(z_thr_range, frac_z[i][k, :], marker=_markers[k], linestyle=_lstyles[k], label="r = $(Int(r)) Å", color="C$(k-1)")
+            ax.axhline(rnd_frac[i][k], linestyle=":", color="C$(k-1)", alpha=0.6) #, label="Random r = $(Int(r)) Å")
         end
 
         ax.yaxis.tick_right()
