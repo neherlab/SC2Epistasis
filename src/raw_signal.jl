@@ -35,25 +35,25 @@ end
 function z_fit(dfit::DataFrame, cpair::Tuple{S,S}) where {S<:AbstractString}
 
     # Isolate fitness entries for a specific clusters pair
-    dfit_c1c2 = dfit[(dfit.clade1.==cpair[1]).&(dfit.clade2.==cpair[2]), :]
+    dfit_c1c2 = dfit[(dfit.clade1 .== cpair[1]) .& (dfit.clade2 .== cpair[2]), :]
     if isempty(dfit_c1c2)
-        dfit_c1c2 = dfit[(dfit.clade1.==cpair[2]).&(dfit.clade2.==cpair[1]), :]
+        dfit_c1c2 = dfit[(dfit.clade1 .== cpair[2]) .& (dfit.clade2 .== cpair[1]), :]
     end
 
     # List of sites with available fitness measurements
-    sites = unique(parse.(Int, map(x -> x[2:end-1], dfit_c1c2.aa_mut)))
+    sites = unique(parse.(Int, map(x -> x[2:(end-1)], dfit_c1c2.aa_mut)))
     sort!(sites)
 
     # Number of available mutations for each site
     num_aamut = zeros(Int, length(sites))
     for n in eachindex(num_aamut)
-        num_aamut[n] = size(dfit_c1c2[findall(x -> parse(Int, x[2:end-1]) == sites[n], dfit_c1c2.aa_mut), :], 1)
+        num_aamut[n] = size(dfit_c1c2[findall(x -> parse(Int, x[2:(end-1)]) == sites[n], dfit_c1c2.aa_mut), :], 1)
     end
 
     z = zeros(length(sites)) #z-score
 
     for i in eachindex(sites)
-        dfit_c1c2_site = dfit_c1c2[findall(x -> parse(Int, x[2:end-1]) == sites[i], dfit_c1c2.aa_mut), :]
+        dfit_c1c2_site = dfit_c1c2[findall(x -> parse(Int, x[2:(end-1)]) == sites[i], dfit_c1c2.aa_mut), :]
         @assert size(dfit_c1c2_site, 1) == num_aamut[i]
         std1 = dfit_c1c2_site.std_fit1
         std2 = dfit_c1c2_site.std_fit2
@@ -79,9 +79,10 @@ function z_dfit(dfit::DataFrame)
 end
 
 # Computes the fraction of sites with epistatic signal above a threshold
-# which have a mismatch in a sphere of radius r for a grid of radii and z-thresholds 
+# which have a mismatch in a sphere of radius r for a grid of radii and z-thresholds
+# This version uses a pre-computed distance matrix to speed up the computation.
 function frac_in_sphere(cpair::Tuple{S1,S1}, fit_epi::Dict{Tuple{S2,S2},Vector{Float64}}, sites::Dict{Tuple{S2,S2},Vector{Int64}},
-    clade_diff::DataFrame, pdb::Vector{PdbTool.Pdb}, af_pdb::PdbTool.Pdb, radii::Vector{Float64}, z_thr::Vector{Float64}) where {S1<:AbstractString,S2<:AbstractString}
+    clade_diff::DataFrame, dist_mat::Matrix{Float64}, radii::Vector{Float64}, z_thr::Vector{Float64}) where {S1<:AbstractString,S2<:AbstractString}
 
     if !haskey(fit_epi, cpair)
         throw(KeyError)
@@ -91,7 +92,7 @@ function frac_in_sphere(cpair::Tuple{S1,S1}, fit_epi::Dict{Tuple{S2,S2},Vector{F
 
     for r in eachindex(radii)
         for z in eachindex(z_thr)
-            frac[r, z], _ = nmis_sphere(cpair, fit_epi, sites, clade_diff, pdb, af_pdb; z_thr=z_thr[z], d_thr=radii[r])
+            frac[r, z], _ = nmis_sphere(cpair, fit_epi, sites, clade_diff, dist_mat; z_thr=z_thr[z], d_thr=radii[r])
         end
     end
 
@@ -101,8 +102,9 @@ end
 
 # Look for mutations with epistatic signal above threshold and assess
 # the presence of background mismatch sites into a sphere of radius r
+# This version uses a pre-computed distance matrix to speed up the computation.
 function nmis_sphere(cpair::Tuple{S1,S1}, fit_epi::Dict{Tuple{S2,S2},Vector{Float64}}, sites::Dict{Tuple{S2,S2},Vector{Int64}},
-    clade_diff::DataFrame, pdb::Vector{PdbTool.Pdb}, af_pdb::PdbTool.Pdb;
+    clade_diff::DataFrame, dist_mat::Matrix{Float64};
     z_thr::Float64=3.0,
     d_thr::Float64=10.0) where {S1<:AbstractString,S2<:AbstractString}
 
@@ -110,11 +112,9 @@ function nmis_sphere(cpair::Tuple{S1,S1}, fit_epi::Dict{Tuple{S2,S2},Vector{Floa
         throw(KeyError)
     end
 
-    @assert all(issetequal(keys(pdb[1].chain), keys(d.chain)) for d in vcat(pdb[2:end], af_pdb)) # Check that all PDB's have the same chains
-
     idx_epi = findall(x -> x >= z_thr, fit_epi[cpair])
     s_mut = sites[cpair][idx_epi]
-    s_mis = clade_diff[(clade_diff.clade1.==cpair[1]).&(clade_diff.clade2.==cpair[2]), :site]
+    s_mis = clade_diff[(clade_diff.clade1 .== cpair[1]) .& (clade_diff.clade2 .== cpair[2]), :site]
 
     nmut = length(s_mut)
 
@@ -125,7 +125,7 @@ function nmis_sphere(cpair::Tuple{S1,S1}, fit_epi::Dict{Tuple{S2,S2},Vector{Floa
         for j in eachindex(s_mis)
             res1 = s_mut[i]
             res2 = s_mis[j]
-            d = dist_res(res1, res2, pdb, af_pdb)
+            d = dist_mat[res1, res2]
             if d <= d_thr
                 cnt_neighbour[i] += 1
             end
@@ -175,26 +175,39 @@ function dist_res(i::Int, j::Int, pdb::PdbTool.Pdb; chain::String="A")
 
 end
 
-# Random benchmark: for a given pair of clades generates random mismtaches on the protein chain.
+# Compute the distance matrix for a set of PDBs and an AlphaFold structure
+function compute_dist_matrix(pdbs::Vector{PdbTool.Pdb}, af_pdb::PdbTool.Pdb)
+
+    res = collect(1:1:1273) #set of all residues in the Spike protein
+    dist_mat = SC2Epistasis.dist_res.(reshape(res, :, 1), reshape(res, 1, :), Ref(pdbs), Ref(af_pdb))
+
+    return dist_mat
+
+end
+
+# Random benchmark: for a given pair of clades generates random mismtaches on the protein chain
+# drawing from the pool defined by `var_sites`.
 # It then computes the fraction of sites with z-score above threshold for which a mismatch is found
-# in spheres of increasing radii. 
+# in spheres of size specified by `radii`.
 function rand_frac_in_sphere(cpair::Tuple{S1,S1}, fit_epi::Dict{Tuple{S2,S2},Vector{Float64}}, sites::Dict{Tuple{S2,S2},Vector{Int64}},
-    clade_diff::DataFrame, pdb::Vector{PdbTool.Pdb}, af_pdb::PdbTool.Pdb, radii::Vector{Float64};
-    z_thr::Float64=1.5,
+    clade_diff::DataFrame, dist_mat::Matrix{Float64}, radii::Vector{Float64}, z_thr::Vector{Float64};
+    var_sites::Vector{Int64}=collect(1:size(dist_mat, 1)),
     nsamp::Int64=100) where {S1<:AbstractString,S2<:AbstractString}
 
     if !haskey(fit_epi, cpair)
         throw(KeyError)
     end
 
-    frac = zeros(Float64, length(radii))
-    f = zeros(Float64, length(radii), nsamp)
-    std_frac = zeros(Float64, length(radii))
+    frac = zeros(Float64, length(radii), length(z_thr))
+    f = zeros(Float64, length(radii), length(z_thr), nsamp)
+    std_frac = zeros(Float64, length(radii), length(z_thr))
 
     Threads.@threads for r in eachindex(radii)
-        f[r, :], _ = rand_nmis_sphere(cpair, fit_epi, sites, clade_diff, pdb, af_pdb; z_thr=z_thr, d_thr=radii[r], nsamp=nsamp)
-        frac[r] = mean(f[r, :])
-        std_frac[r] = std(f[r, :]) / sqrt(nsamp)
+        Threads.@threads for z in eachindex(z_thr)
+            f[r, z, :], _ = rand_nmis_sphere(cpair, fit_epi, sites, clade_diff, dist_mat; var_sites=var_sites, z_thr=z_thr[z], d_thr=radii[r], nsamp=nsamp)
+            frac[r, z] = mean(f[r, z, :])
+            std_frac[r, z] = std(f[r, z, :]) / sqrt(nsamp)
+        end
     end
 
     return frac, std_frac
@@ -203,7 +216,8 @@ end
 
 # Random background mismatches in a sphere of radius r
 function rand_nmis_sphere(cpair::Tuple{S1,S1}, fit_epi::Dict{Tuple{S2,S2},Vector{Float64}}, sites::Dict{Tuple{S2,S2},Vector{Int64}},
-    clade_diff::DataFrame, pdb::Vector{PdbTool.Pdb}, af_pdb::PdbTool.Pdb;
+    clade_diff::DataFrame, dist_mat::Matrix{Float64};
+    var_sites::Vector{Int64}=collect(1:size(dist_mat, 1)),
     z_thr::Float64=1.5,
     d_thr::Float64=10.0,
     nsamp::Int64=100) where {S1<:AbstractString,S2<:AbstractString}
@@ -212,84 +226,18 @@ function rand_nmis_sphere(cpair::Tuple{S1,S1}, fit_epi::Dict{Tuple{S2,S2},Vector
         throw(KeyError)
     end
 
-    @assert all(issetequal(keys(pdb[1].chain), keys(d.chain)) for d in vcat(pdb[2:end], af_pdb)) # Check that all PDB's have the same chains
-    chains = collect(keys(af_pdb.chain))
-    L = length(af_pdb.chain[chains[1]].residue)
-
     idx_epi = findall(x -> x >= z_thr, fit_epi[cpair])
     s_mut = sites[cpair][idx_epi]
     nmut = length(s_mut)
-    nmis = length(clade_diff[(clade_diff.clade1.==cpair[1]).&(clade_diff.clade2.==cpair[2]), :site])
-    smis = clade_diff[(clade_diff.clade1.==cpair[1]).&(clade_diff.clade2.==cpair[2]), :site]
+    nmis = length(clade_diff[(clade_diff.clade1 .== cpair[1]) .& (clade_diff.clade2 .== cpair[2]), :site])
+    smis = clade_diff[(clade_diff.clade1 .== cpair[1]) .& (clade_diff.clade2 .== cpair[2]), :site]
 
     frac = zeros(Float64, nsamp) # fraction of sites within sphere for each replicate
     cnt_neighbor = zeros(Float64, nmut, nsamp) # count of neighbors within threshold for each replicate and site
-    d_tens = zeros(Float64, nmut, nmis, nsamp) # tensor with distances for all random samples
-    j_rand = rand(setdiff(1:L, vcat(s_mut, smis)), nmis, nsamp) # random mismatches
-
-    d_tens .= dist_res.(reshape(s_mut, :, 1, 1), reshape(j_rand, 1, nmis, nsamp), Ref(pdb), Ref(af_pdb))
-    cnt_neighbor .= sum(d_tens .<= d_thr, dims=2)[:, 1, :]
-    frac .= mean(cnt_neighbor .>= 1, dims=1)[1, :]
-
-    return frac, cnt_neighbor
-
-end
-
-# Random benchmark: for a given pair of clades generates random mismtaches on the protein chain
-# only at sites characterized by a Shannon entropy above a threshold.
-# It then computes the fraction of sites with z-score above threshold for which a mismatch is found
-# in spheres of increasing radii.
-function rand_frac_in_sphere(cpair::Tuple{S1,S1}, fit_epi::Dict{Tuple{S2,S2},Vector{Float64}}, sites::Dict{Tuple{S2,S2},Vector{Int64}},
-    clade_diff::DataFrame, pdb::Vector{PdbTool.Pdb}, af_pdb::PdbTool.Pdb, radii::Vector{Float64}, var_sites::Vector{Int64};
-    z_thr::Float64=1.5,
-    nsamp::Int64=100) where {S1<:AbstractString,S2<:AbstractString}
-
-    if !haskey(fit_epi, cpair)
-        throw(KeyError)
-    end
-
-    frac = zeros(Float64, length(radii))
-    f = zeros(Float64, length(radii), nsamp)
-    std_frac = zeros(Float64, length(radii))
-
-    Threads.@threads for r in eachindex(radii)
-        f[r, :], _ = rand_nmis_sphere(cpair, fit_epi, sites, clade_diff, pdb, af_pdb, var_sites; z_thr=z_thr, d_thr=radii[r], nsamp=nsamp)
-        frac[r] = mean(f[r, :])
-        std_frac[r] = std(f[r, :]) / sqrt(nsamp)
-    end
-
-    return frac, std_frac
-
-end
-
-function rand_nmis_sphere(cpair::Tuple{S1,S1}, fit_epi::Dict{Tuple{S2,S2},Vector{Float64}}, sites::Dict{Tuple{S2,S2},Vector{Int64}},
-    clade_diff::DataFrame, pdb::Vector{PdbTool.Pdb}, af_pdb::PdbTool.Pdb, var_sites::Vector{Int64};
-    z_thr::Float64=1.5,
-    d_thr::Float64=10.0,
-    nsamp::Int64=100) where {S1<:AbstractString,S2<:AbstractString}
-
-    if !haskey(fit_epi, cpair)
-        throw(KeyError)
-    end
-
-    @assert all(issetequal(keys(pdb[1].chain), keys(d.chain)) for d in vcat(pdb[2:end], af_pdb)) # Check that all PDB's have the same chains
-    chains = collect(keys(af_pdb.chain))
-    L = length(af_pdb.chain[chains[1]].residue)
-
-    idx_epi = findall(x -> x >= z_thr, fit_epi[cpair])
-    s_mut = sites[cpair][idx_epi]
-    nmut = length(s_mut)
-    nmis = length(clade_diff[(clade_diff.clade1.==cpair[1]).&(clade_diff.clade2.==cpair[2]), :site])
-    smis = clade_diff[(clade_diff.clade1.==cpair[1]).&(clade_diff.clade2.==cpair[2]), :site]
-
-    frac = zeros(Float64, nsamp) # fraction of sites within sphere for each replicate
-    cnt_neighbor = zeros(Float64, nmut, nsamp) # count of neighbors within threshold for each replicate and site
-    d_tens = zeros(Float64, nmut, nmis, nsamp) # tensor with distances for all random samples
     j_rand = rand(setdiff(var_sites, vcat(s_mut, smis)), nmis, nsamp) # random mismatches
 
-    d_tens .= SC2Epistasis.dist_res.(reshape(s_mut, :, 1, 1), reshape(j_rand, 1, nmis, nsamp), Ref(pdb), Ref(af_pdb))
-    cnt_neighbor .= sum(d_tens .<= d_thr, dims=2)[:, 1, :]
-    frac .= mean(cnt_neighbor .>= 1, dims=1)[1, :]
+    cnt_neighbor .= dropdims(sum(reshape(dist_mat[s_mut, vec(j_rand)], nmut, nmis, nsamp) .<= d_thr, dims=2), dims=2)
+    frac .= vec(mean(cnt_neighbor .>= 1, dims=1))
 
     return frac, cnt_neighbor
 
