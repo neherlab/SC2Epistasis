@@ -1,6 +1,6 @@
 """ Shared plotting function: fraction of positions in sphere vs radius """
 
-function plot_sphere_frac(cp_plt::Vector{Tuple{S1,S1}}, frac::Vector{Matrix{Float64}}, rnd_frac::Vector{Vector{Float64}};
+function plot_sphere_frac(cp_plt::Vector{Tuple{S1,S1}}, frac::Vector{Matrix{Float64}}, rnd_frac::Vector{Matrix{Float64}};
     radii::Vector{Float64}=[5.0, 8.0, 10.0, 12.0, 15.0, 20.0],
     z_thr::Vector{Vector{Float64}}=[[1.75, 2.0, 2.25], [1.25, 1.5, 1.75], [1.5, 1.75, 2.0], [1.5, 1.75, 2.0]],
     fig=nothing, axs=nothing) where {S1<:AbstractString}
@@ -60,7 +60,7 @@ function plot_sphere_frac(cp_plt::Vector{Tuple{S1,S1}}, frac::Vector{Matrix{Floa
 end
 
 function plot_sphere_frac_vs_z(cp_plt::Vector{Tuple{S1,S1}}, frac_z::Vector{Matrix{Float64}},
-    z_thr_range::Vector{Float64}, rnd_frac::Vector{Vector{Float64}};
+    z_thr_range::Vector{Float64}, rnd_frac::Vector{Matrix{Float64}};
     radii_sel::Vector{Float64}=[8.0, 15.0],
     fig=nothing, axs=nothing) where {S1<:AbstractString}
 
@@ -81,7 +81,8 @@ function plot_sphere_frac_vs_z(cp_plt::Vector{Tuple{S1,S1}}, frac_z::Vector{Matr
         _lstyles = ["-", "--"]
         for (k, r) in enumerate(radii_sel)
             ax.plot(z_thr_range, frac_z[i][k, :], marker=_markers[k], linestyle=_lstyles[k], label="r = $(Int(r)) Å", color="C$(k-1)")
-            ax.axhline(rnd_frac[i][k], linestyle=":", color="C$(k-1)", alpha=0.6) #, label="Random r = $(Int(r)) Å")
+            ax.plot(z_thr_range, rnd_frac[i][k, :], linestyle=":", color="C$(k-1)", alpha=0.6) #, label="Random r = $(Int(r)) Å")
+            #ax.axhline(rnd_frac[i][k], linestyle=":", color="C$(k-1)", alpha=0.6) #, label="Random r = $(Int(r)) Å")
         end
 
         ax.yaxis.tick_right()

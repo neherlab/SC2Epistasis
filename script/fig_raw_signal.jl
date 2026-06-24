@@ -5,7 +5,7 @@ versions for each figure set.
 """
 
 # Import packages
-using DataFrames, CSV, JLD2, PyPlot, PyCall, PdbTool
+using DataFrames, CSV, JLD2, PyPlot, PyCall, PdbTool, DelimitedFiles
 include("z_plot_raw_zscores_bands.jl")
 include("z_plot_sphere_frac.jl")
 
@@ -25,15 +25,18 @@ clade_diff_S = clade_diff[clade_diff.prot .== "S", :]
 println("Loading PDB structures...")
 pdbs, af_pdb = SC2Epistasis.read_pdbs("data/ref_seq/Spike.txt")
 
-println("Compute distance matrix...")
-dist_mat = SC2Epistasis.compute_dist_matrix(pdbs, af_pdb)
+println("Loading distance matrix...")
+dist_mat = DelimitedFiles.readdlm("results/dist_mat.txt", Float64)
 
 println("Loading diversity data...")
 site_shannon_ent = CSV.read("data/nextstrain_staging_nextclade_sars-cov-2_diversity.tsv", DataFrame)
 var_sites = site_shannon_ent.position[site_shannon_ent.entropy .>= 0.01]
+L = length(af_pdb.chain["A"].residue) # number of residues in the Spike protein
+all_sites = collect(1:L)
 
 radii = [5.0, 8.0, 10.0, 12.0, 15.0, 20.0]
-radii_sel = [8.0, 15.0]
+#radii_sel = [8.0, 15.0]
+radii_sel = [5.0, 10.0]
 z_thr_range = collect(0.5:0.1:2.0)
 nsamples = 100
 
@@ -65,15 +68,15 @@ end
 function _compute_frac(cp_plt, z_thr, z_dict, s_dict, clade_diff_S, var_sites,
     dist_mat, radii, radii_sel, z_thr_range)
     frac_vec = [zeros(Float64, length(radii), length(z_thr[i])) for i in eachindex(cp_plt)]
-    rnd_frac = [zeros(Float64, length(radii)) for i in eachindex(cp_plt)]
+    rnd_frac = [zeros(Float64, length(radii), 1) for i in eachindex(cp_plt)]
     frac_vec_z = [zeros(Float64, length(radii_sel), length(z_thr_range)) for i in eachindex(cp_plt)]
-    rnd_frac_z = [zeros(Float64, length(radii_sel)) for i in eachindex(cp_plt)]
+    rnd_frac_z = [zeros(Float64, length(radii_sel), length(z_thr_range)) for i in eachindex(cp_plt)]
     for i in eachindex(cp_plt)
         println("  $(cp_plt[i][1])-$(cp_plt[i][2]): computing sphere fractions...")
         frac_vec[i] = SC2Epistasis.frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff_S, dist_mat, radii, z_thr[i])
-        rnd_frac[i], _ = SC2Epistasis.rand_frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff_S, dist_mat, radii, var_sites; z_thr=z_thr[i][1], nsamp=nsamples)
+        rnd_frac[i], _ = SC2Epistasis.rand_frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff_S, dist_mat, radii, [z_thr[i][1]]; var_sites=var_sites, nsamp=nsamples)
         frac_vec_z[i] = SC2Epistasis.frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff_S, dist_mat, radii_sel, z_thr_range)
-        rnd_frac_z[i], _ = SC2Epistasis.rand_frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff_S, dist_mat, radii_sel, var_sites; z_thr=z_thr_range[1], nsamp=nsamples)
+        rnd_frac_z[i], _ = SC2Epistasis.rand_frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff_S, dist_mat, radii_sel, z_thr_range; var_sites=var_sites, nsamp=nsamples)
     end
     return frac_vec, rnd_frac, frac_vec_z, rnd_frac_z
 end
@@ -99,10 +102,11 @@ configs = [
     ),
 ]
 
+# Figures with random mismatches drawn from all sites
 for (k, (cp_plt, z_thr, outpath)) in enumerate(configs)
 
     println("\n[$k/$(length(configs))] Computing data for $(basename(outpath))...")
-    frac_vec, rnd_frac, frac_vec_z, rnd_frac_z = _compute_frac(cp_plt, z_thr, z_dict, s_dict, clade_diff_S, var_sites, dist_mat, radii, radii_sel, z_thr_range)
+    frac_vec, rnd_frac, frac_vec_z, rnd_frac_z = _compute_frac(cp_plt, z_thr, z_dict, s_dict, clade_diff_S, all_sites, dist_mat, radii, radii_sel, z_thr_range)
 
     # Version 1: B = fraction vs radius
     println("  Rendering $(basename(outpath)).pdf...")
@@ -123,4 +127,31 @@ for (k, (cp_plt, z_thr, outpath)) in enumerate(configs)
     println("  Saved $(outpath)_vs_z.pdf")
 
 end
+
+# Figures with random mismatches drawn from variable sites only
+for (k, (cp_plt, z_thr, outpath)) in enumerate(configs)
+
+    println("\n[$k/$(length(configs))] Computing data for $(basename(outpath))...")
+    frac_vec, rnd_frac, frac_vec_z, rnd_frac_z = _compute_frac(cp_plt, z_thr, z_dict, s_dict, clade_diff_S, var_sites, dist_mat, radii, radii_sel, z_thr_range)
+
+    # Version 1: B = fraction vs radius
+    println("  Rendering $(basename(outpath)).pdf...")
+    fig, axs_B = _make_composite(cp_plt, z_dict, s_dict, clade_diff_S)
+    plot_sphere_frac(cp_plt, frac_vec, rnd_frac; radii=radii, z_thr=z_thr, fig=fig, axs=axs_B)
+    fig.tight_layout(rect=[0.06, 0, 0.96, 1])
+    fig.savefig(outpath * "_var_sites.pdf", bbox_inches="tight")
+    close(fig)
+    println("  Saved $(outpath)_var_sites.pdf")
+
+    # Version 2: B = fraction vs z-score threshold
+    println("  Rendering $(basename(outpath))_vs_z.pdf...")
+    fig, axs_B = _make_composite(cp_plt, z_dict, s_dict, clade_diff_S)
+    plot_sphere_frac_vs_z(cp_plt, frac_vec_z, z_thr_range, rnd_frac_z; radii_sel=radii_sel, fig=fig, axs=axs_B)
+    fig.tight_layout(rect=[0.06, 0, 0.96, 1])
+    fig.savefig(outpath * "_vs_z_var_sites.pdf", bbox_inches="tight")
+    close(fig)
+    println("  Saved $(outpath)_vs_z_var_sites.pdf")
+
+end
+
 println("\nDone.")
