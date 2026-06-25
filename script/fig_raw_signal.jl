@@ -65,20 +65,24 @@ function _make_composite(cp_plt, z_dict, s_dict, clade_diff_S)
 end
 
 # Helper: compute B-panel data for a given set of clade pairs and z-score thresholds
-function _compute_frac(cp_plt, z_thr, z_dict, s_dict, clade_diff_S, var_sites,
+function _compute_frac(cp_plt, z_thr, z_dict, s_dict, clade_diff_S, all_sites, var_sites,
     dist_mat, radii, radii_sel, z_thr_range)
     frac_vec = [zeros(Float64, length(radii), length(z_thr[i])) for i in eachindex(cp_plt)]
     rnd_frac = [zeros(Float64, length(radii), 1) for i in eachindex(cp_plt)]
     frac_vec_z = [zeros(Float64, length(radii_sel), length(z_thr_range)) for i in eachindex(cp_plt)]
     rnd_frac_z = [zeros(Float64, length(radii_sel), length(z_thr_range)) for i in eachindex(cp_plt)]
+    rnd_frac_var = [zeros(Float64, length(radii), 1) for i in eachindex(cp_plt)]
+    rnd_frac_z_var = [zeros(Float64, length(radii_sel), length(z_thr_range)) for i in eachindex(cp_plt)]
     for i in eachindex(cp_plt)
         println("  $(cp_plt[i][1])-$(cp_plt[i][2]): computing sphere fractions...")
         frac_vec[i] = SC2Epistasis.frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff_S, dist_mat, radii, z_thr[i])
-        rnd_frac[i], _ = SC2Epistasis.rand_frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff_S, dist_mat, radii, [z_thr[i][1]]; var_sites=var_sites, nsamp=nsamples)
+        rnd_frac[i], _ = SC2Epistasis.rand_frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff_S, dist_mat, radii, [z_thr[i][1]]; var_sites=all_sites, nsamp=nsamples)
         frac_vec_z[i] = SC2Epistasis.frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff_S, dist_mat, radii_sel, z_thr_range)
-        rnd_frac_z[i], _ = SC2Epistasis.rand_frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff_S, dist_mat, radii_sel, z_thr_range; var_sites=var_sites, nsamp=nsamples)
+        rnd_frac_z[i], _ = SC2Epistasis.rand_frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff_S, dist_mat, radii_sel, z_thr_range; var_sites=all_sites, nsamp=nsamples)
+        rnd_frac_var[i], _ = SC2Epistasis.rand_frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff_S, dist_mat, radii, [z_thr[i][1]]; var_sites=var_sites, nsamp=nsamples)
+        rnd_frac_z_var[i], _ = SC2Epistasis.rand_frac_in_sphere(cp_plt[i], z_dict, s_dict, clade_diff_S, dist_mat, radii_sel, z_thr_range; var_sites=var_sites, nsamp=nsamples)
     end
-    return frac_vec, rnd_frac, frac_vec_z, rnd_frac_z
+    return frac_vec, rnd_frac, frac_vec_z, rnd_frac_z, rnd_frac_var, rnd_frac_z_var
 end
 
 ###############################---------------------------------
@@ -102,16 +106,16 @@ configs = [
     ),
 ]
 
-# Figures with random mismatches drawn from all sites
+# Make figures: vs radius and vs z-score for each configuration. Including both random tests
 for (k, (cp_plt, z_thr, outpath)) in enumerate(configs)
 
     println("\n[$k/$(length(configs))] Computing data for $(basename(outpath))...")
-    frac_vec, rnd_frac, frac_vec_z, rnd_frac_z = _compute_frac(cp_plt, z_thr, z_dict, s_dict, clade_diff_S, all_sites, dist_mat, radii, radii_sel, z_thr_range)
+    frac_vec, rnd_frac, frac_vec_z, rnd_frac_z, rnd_frac_var, rnd_frac_z_var = _compute_frac(cp_plt, z_thr, z_dict, s_dict, clade_diff_S, all_sites, var_sites, dist_mat, radii, radii_sel, z_thr_range)
 
     # Version 1: B = fraction vs radius
     println("  Rendering $(basename(outpath)).pdf...")
     fig, axs_B = _make_composite(cp_plt, z_dict, s_dict, clade_diff_S)
-    plot_sphere_frac(cp_plt, frac_vec, rnd_frac; radii=radii, z_thr=z_thr, fig=fig, axs=axs_B)
+    plot_sphere_frac(cp_plt, frac_vec, rnd_frac, rnd_frac_var; radii=radii, z_thr=z_thr, fig=fig, axs=axs_B)
     fig.tight_layout(rect=[0.06, 0, 0.96, 1])
     fig.savefig(outpath * ".pdf", bbox_inches="tight")
     close(fig)
@@ -120,37 +124,11 @@ for (k, (cp_plt, z_thr, outpath)) in enumerate(configs)
     # Version 2: B = fraction vs z-score threshold
     println("  Rendering $(basename(outpath))_vs_z.pdf...")
     fig, axs_B = _make_composite(cp_plt, z_dict, s_dict, clade_diff_S)
-    plot_sphere_frac_vs_z(cp_plt, frac_vec_z, z_thr_range, rnd_frac_z; radii_sel=radii_sel, fig=fig, axs=axs_B)
+    plot_sphere_frac_vs_z(cp_plt, frac_vec_z, z_thr_range, rnd_frac_z, rnd_frac_z_var; radii_sel=radii_sel, fig=fig, axs=axs_B)
     fig.tight_layout(rect=[0.06, 0, 0.96, 1])
     fig.savefig(outpath * "_vs_z.pdf", bbox_inches="tight")
     close(fig)
     println("  Saved $(outpath)_vs_z.pdf")
-
-end
-
-# Figures with random mismatches drawn from variable sites only
-for (k, (cp_plt, z_thr, outpath)) in enumerate(configs)
-
-    println("\n[$k/$(length(configs))] Computing data for $(basename(outpath))...")
-    frac_vec, rnd_frac, frac_vec_z, rnd_frac_z = _compute_frac(cp_plt, z_thr, z_dict, s_dict, clade_diff_S, var_sites, dist_mat, radii, radii_sel, z_thr_range)
-
-    # Version 1: B = fraction vs radius
-    println("  Rendering $(basename(outpath)).pdf...")
-    fig, axs_B = _make_composite(cp_plt, z_dict, s_dict, clade_diff_S)
-    plot_sphere_frac(cp_plt, frac_vec, rnd_frac; radii=radii, z_thr=z_thr, fig=fig, axs=axs_B)
-    fig.tight_layout(rect=[0.06, 0, 0.96, 1])
-    fig.savefig(outpath * "_var_sites.pdf", bbox_inches="tight")
-    close(fig)
-    println("  Saved $(outpath)_var_sites.pdf")
-
-    # Version 2: B = fraction vs z-score threshold
-    println("  Rendering $(basename(outpath))_vs_z.pdf...")
-    fig, axs_B = _make_composite(cp_plt, z_dict, s_dict, clade_diff_S)
-    plot_sphere_frac_vs_z(cp_plt, frac_vec_z, z_thr_range, rnd_frac_z; radii_sel=radii_sel, fig=fig, axs=axs_B)
-    fig.tight_layout(rect=[0.06, 0, 0.96, 1])
-    fig.savefig(outpath * "_vs_z_var_sites.pdf", bbox_inches="tight")
-    close(fig)
-    println("  Saved $(outpath)_vs_z_var_sites.pdf")
 
 end
 
