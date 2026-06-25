@@ -42,7 +42,7 @@ function epistatic_table(mutations::Vector{S}, couplings::Vector{Dict{Vector{Uni
         for (key, value) in couplings[m]
             counter += 1
             J_tab.σᵢ_wt[counter] = mutations[m][1]
-            J_tab.i[counter] = parse(Int, mutations[m][2:end-1])
+            J_tab.i[counter] = parse(Int, mutations[m][2:(end-1)])
             J_tab.σᵢ[counter] = mutations[m][end]
             J_tab.j[counter] = key[1]
             J_tab.σⱼ[counter] = only(key[2])
@@ -71,7 +71,7 @@ function frob_norm(Jtab::DataFrame, res_pair::Vector{Tuple{Int,Int}})
         J_res[(r[1], r[2])] = frob_norm(group_jtab, r)
     end
 
-    return sort(J_res, byvalue=true, rev=true)
+    return J_res
 
 end
 
@@ -131,7 +131,7 @@ function read_pdbs(ref_file::String)
     # Map PDBs to reference sequence
     _ = SC2Epistasis.map_pdbs!(pdbs, ref_seq; mappedTo=ref_file)
 
-    return pdbs[1:end-1], pdbs[end] # return PDBs and AF2 structure
+    return pdbs[1:(end-1)], pdbs[end] # return PDBs and AF2 structure
 
 end
 
@@ -158,7 +158,7 @@ function threedist(optx::Vector{OptX}, data::Vector{Data}, pdbs::Vector{PdbTool.
 
     M = length(data)
 
-    mut_site = [parse(Int64, data[m].dfit_mut.aa_mut[1][2:end-1]) for m in 1:M]
+    mut_site = [parse(Int64, data[m].dfit_mut.aa_mut[1][2:(end-1)]) for m in 1:M]
     j_dim = sum([optx[m].num_j for m in 1:M])
 
     dist = zeros(Float64, j_dim)
@@ -198,7 +198,7 @@ function threedist(optx::Vector{OptX}, data::Vector{Data}, af_pdb::PdbTool.Pdb)
 
     M = length(data)
 
-    mut_site = [parse(Int64, data[m].dfit_mut.aa_mut[1][2:end-1]) for m in 1:M]
+    mut_site = [parse(Int64, data[m].dfit_mut.aa_mut[1][2:(end-1)]) for m in 1:M]
     j_dim = sum([optx[m].num_j for m in 1:M])
 
     d = zeros(Float64, j_dim)
@@ -232,11 +232,11 @@ function coup_dfit(Jtab::DataFrame, dfit::DataFrame, cdiff::DataFrame, muts::Vec
 
     j_dfit = []
     for m in eachindex(muts)
-        site = parse(Int, muts[m][2:end-1])
+        site = parse(Int, muts[m][2:(end-1)])
         # Extract couplings involving the mutation site
-        Jmut = Jtab[(Jtab.σᵢ_wt.==string(muts[m][1])).&(Jtab.i.==site).&(Jtab.σᵢ.==string(muts[m][end])).&(Jtab.j.==res[m]), :]
+        Jmut = Jtab[(Jtab.σᵢ_wt .== string(muts[m][1])) .& (Jtab.i .== site) .& (Jtab.σᵢ .== string(muts[m][end])) .& (Jtab.j .== res[m]), :]
         # Extract fitness discrepancies for the mutation
-        dfit_mut = dfit[dfit.aa_mut.==muts[m], :]
+        dfit_mut = dfit[dfit.aa_mut .== muts[m], :]
         push!(j_dfit, coup_dfit(Jmut, dfit_mut, cdiff, res[m]))
     end
 
@@ -247,7 +247,7 @@ end
 function coup_dfit(Jmut::DataFrame, dfit_mut::DataFrame, cdiff::DataFrame, res::Int)
 
     cp_mut = SC2Epistasis.clade_pair_mut(dfit_mut, cdiff)
-    cp_mut = cp_mut[cp_mut.site.==res, :]
+    cp_mut = cp_mut[cp_mut.site .== res, :]
 
     clades = unique(vcat(dfit_mut.clade1, dfit_mut.clade2))
     fit = fill(0.0, length(clades))
@@ -266,12 +266,12 @@ function coup_dfit(Jmut::DataFrame, dfit_mut::DataFrame, cdiff::DataFrame, res::
             std_fit[i] = dfit_mut.std_fit2[idx_c][1]
         end
         if sum(cp_mut.clade1 .== c) != 0
-            aa = cp_mut[cp_mut.clade1.==c, :aa_c1][1]
+            aa = cp_mut[cp_mut.clade1 .== c, :aa_c1][1]
         else
-            aa = cp_mut[cp_mut.clade2.==c, :aa_c2][1]
+            aa = cp_mut[cp_mut.clade2 .== c, :aa_c2][1]
         end
         sj[i] = aa
-        J[i] = Jmut[string.(Jmut.σⱼ).==aa, :J][1]
+        J[i] = Jmut[string.(Jmut.σⱼ) .== aa, :J][1]
     end
 
     return (clades=clades, fit=fit, s_fit=std_fit, sj=sj, J=J, si_wt=Jmut.σᵢ_wt[1], si=Jmut.σᵢ[1], i=Jmut.i[1], j=res)
