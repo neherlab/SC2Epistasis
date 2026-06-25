@@ -71,6 +71,10 @@ You can run the scripts in the `script/` directory from the Julia REPL using the
 
 Every script imports the required packages and defines additional necessary functions.
 
+### Producing the visualization of PDB structure
+The [script](./script) folder contains `spike_struct_pymol.pml`, which is a PyMol script
+that produces the visualization of the Spike protein trimer from the PDB file [7krr.pdb](./data/PDB/Spike/7krr.pdb). To make it run, one needs to install the proper conda environment following instructions at [https://pymol.org/conda/](https://pymol.org/conda/).
+
 ## Infer coupling parameters
 In order to infer the coupling parameters, run the script:
 
