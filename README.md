@@ -73,7 +73,10 @@ Every script imports the required packages and defines additional necessary func
 
 ### Producing the visualization of PDB structure
 The [script](./script) folder contains `spike_struct_pymol.pml`, which is a PyMol script
-that produces the visualization of the Spike protein trimer from the PDB file [7krr.pdb](./data/PDB/Spike/7krr.pdb). To make it run, one needs to install the proper conda environment following instructions at [https://pymol.org/conda/](https://pymol.org/conda/).
+that produces the visualization of the Spike protein trimer from the PDB file [7krr.pdb](./data/PDB/Spike/7krr.pdb). One needs to install the proper conda environment following instructions at [https://pymol.org/conda/](https://pymol.org/conda/). To then run the script:
+
+    conda activate pymol-env
+    pymol -c script/spike_struct_pymol.pml
 
 ## Infer coupling parameters
 In order to infer the coupling parameters, run the script:
