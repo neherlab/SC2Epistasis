@@ -25,7 +25,7 @@ function plot_model_fit(fit_df_vec::Vector{DataFrame}, e0::Float64;
 
     ax[1].hlines(e0, fit_df_vec[end].l1[1], fit_df_vec[end].l1[end], color="black", linestyle="-", label="Estimated noise")
     ax[1].set_xscale("log")
-    ax[1].set_ylabel("Energy - Model MSE", fontsize=14)
+    ax[1].set_ylabel("Model MSE", fontsize=14)
     ax[1].legend(loc="best", fontsize=12)
     ax[1].set_ylim([0.01, 0.95])
     ax[1].vlines(λ_3d, ax[1].get_ylim()[1], ax[1].get_ylim()[2], color=shades1[2], linestyle=":", label="")

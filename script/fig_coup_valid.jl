@@ -8,7 +8,7 @@ using DataFrames, CSV, PyPlot, PyCall, Statistics
 ###############################---------------------------------
 
 # Panel A plotting function
-function plot_jdfit!(axs_flat, jdfit_muts)
+function plot_jdfit!(axs_flat, jdfit_muts, background_states)
 
     for n in eachindex(jdfit_muts)
         ax = axs_flat[n]
@@ -42,7 +42,8 @@ function plot_jdfit!(axs_flat, jdfit_muts)
             force_text=(0.2, 1.2), force_points=(0.5, 0.8),
             expand_text=(1.2, 1.2), expand_points=(2.0, 2.0))
         ax.set_box_aspect(3 / 3)
-        ax.set_xlabel(" i=$(jdfit.i), j=$(jdfit.j)", fontsize=14)
+        states_str = join(background_states[n], ",")
+        ax.set_xlabel("i=$(jdfit.i), j=$(jdfit.j),  \$\\sigma_j = $(states_str)\$", fontsize=14)
         ax.set_ylabel("Δf($(jdfit.si_wt) → $(jdfit.si))", fontsize=14)
         ax.tick_params(labelsize=12)
     end
@@ -160,6 +161,7 @@ cdiff_prot = clade_diff[clade_diff.prot.==prot, :]
 # Panel A
 muts_list = ["R21G", "P384L", "P499L", "R683Q"]
 int_res = [19, 408, 445, 681]
+background_states = [["I", "T"], ["P", "R"], ["V", "H", "P"], ["P", "H", "R"]]
 jdfit_muts = SC2Epistasis.coup_dfit(Jtab, dfit_prot, cdiff_prot, muts_list, int_res)
 
 # Panel B
@@ -182,7 +184,7 @@ ax_B = fig.add_subplot(gs[1, 3])
 ax_C = fig.add_subplot(gs[2, 3])
 
 # Plot each panel
-plot_jdfit!(axs_A_flat, jdfit_muts)
+plot_jdfit!(axs_A_flat, jdfit_muts, background_states)
 plot_hist!(ax_B, z_df.av_z, z_df.av_dz)
 plot_shift!(ax_C, dms_shift, Jtab, dfit_prot, cdiff_prot, cpair)
 
