@@ -35,7 +35,6 @@ L = length(af_pdb.chain["A"].residue) # number of residues in the Spike protein
 all_sites = collect(1:L)
 
 radii = [5.0, 8.0, 10.0, 12.0, 15.0, 20.0]
-#radii_sel = [8.0, 15.0]
 radii_sel = [5.0, 10.0]
 z_thr_range = collect(0.5:0.1:2.0)
 nsamples = 100
@@ -59,7 +58,7 @@ function _make_composite(cp_plt, z_dict, s_dict, clade_diff_S)
     axs_A[1].text(-0.04, 1.02, "A", transform=axs_A[1].transAxes, fontsize=18, fontweight="bold", va="bottom")
     axs_B[1].text(-0.08, 1.02, "B", transform=axs_B[1].transAxes, fontsize=18, fontweight="bold", va="bottom")
     fig.text(0.08, 0.5, "Average fitness z-score", va="center", rotation="vertical", fontsize=16)
-    fig.text(0.95, 0.5, "Fraction of " * L"i\;" * "s.t. " * L"\exists j:\:d(i,j) < d_{thr}",
+    fig.text(0.95, 0.5, "Fraction of " * L"i\;" * "s.t. " * L"\exists j:\:d(i,j) < r",
         va="center", ha="right", rotation="vertical", fontsize=16)
     return fig, axs_B
 end

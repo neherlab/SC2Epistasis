@@ -17,7 +17,7 @@ function merge_dms_dfit(dms_shift::DataFrame, dfit::DataFrame, clade_pair::Tuple
 
     # Merge dataframes
     df_merge = innerjoin(dms_shift, dfit_c1c2, on=:mutation)
-    df_merge = df_merge[(df_merge.exp_count1.>=cnt_thr1).&(df_merge.exp_count2.>=cnt_thr2), :]
+    df_merge = df_merge[(df_merge.exp_count1 .>= cnt_thr1) .& (df_merge.exp_count2 .>= cnt_thr2), :]
 
     return df_merge
 
@@ -28,7 +28,11 @@ function plot_shift(dms_shift_ba1_ba2_21j::DataFrame, dms_shift_ba2_xbb::DataFra
     dfit_prot::DataFrame, cdiff_prot::DataFrame, clade_pairs::Vector{Tuple{S,S}};
     ncols::Int=2,
     cnt_thr1::Vector{Float64}=[20.0, 20.0],
-    cnt_thr2::Vector{Float64}=[20.0, 15.0]) where S<:AbstractString
+    cnt_thr2::Vector{Float64}=[20.0, 15.0],
+    doms_label::Vector{S}=["NTD", "RBD"],
+    doms_edges::Vector{UnitRange{Int}}=[14:305, 319:541],
+    doms_col::Vector{S}=["orange", "blue"],
+    doms_marker::Vector{S}=["s", "^"]) where S<:AbstractString
 
     @assert length(clade_pairs) == ncols
 
@@ -48,6 +52,7 @@ function plot_shift(dms_shift_ba1_ba2_21j::DataFrame, dms_shift_ba2_xbb::DataFra
         )
 
         muts = shift_dfit.mutation # overlap mutations
+        res_index_vec = parse.(Int, map(x -> x[2:(end-1)], muts)) # residue indices
         j_ddf = SC2Epistasis.mutcp_ddf(Jtab, muts, cdiff_prot, cpair[1], cpair[2]) # model predicted fitness discrepancies
         cld_shift = cpair[1]
         cld_comp = cpair[2]
@@ -60,46 +65,29 @@ function plot_shift(dms_shift_ba1_ba2_21j::DataFrame, dms_shift_ba2_xbb::DataFra
             ax = [ax] # ensure ax is an array for single subplot case
         end
 
-        ax[i].scatter(j_ddf, shift, alpha=0.7, s=10)
-        ax[i].set_title("$(cpair[1])-$(cpair[2])", fontsize=14)
+        domains = [(doms_edges[n][1], doms_edges[n][end], doms_label[n], doms_col[n]) for n in eachindex(doms_label)]
+        domain_masks = [(res_index_vec .>= start) .& (res_index_vec .<= stop) for (start, stop, _, _) in domains]
+        other_domain = .!foldl((acc, mask) -> acc .| mask, domain_masks)
 
-        # Position text to avoid overlap with points
-        xlim = ax[i].get_xlim()
-        ylim = ax[i].get_ylim()
-        x_range = xlim[2] - xlim[1]
-        y_range = ylim[2] - ylim[1]
-
-        # Try different positions: top-left, top-right, bottom-left, bottom-right
-        positions = [
-            (0.05, 0.95, "top", "left"),
-            (0.95, 0.95, "top", "right"),
-            (0.05, 0.05, "bottom", "left"),
-            (0.95, 0.05, "bottom", "right")
-        ]
-
-        # Find position with least overlap
-        best_pos = positions[1]
-        min_overlap = Inf
-
-        for pos in positions
-            x_text = xlim[1] + pos[1] * x_range
-            y_text = ylim[1] + pos[2] * y_range
-            # Count nearby points (within 10% of range)
-            overlap = sum((abs.(j_ddf .- x_text) .< 0.1 * x_range) .& (abs.(shift .- y_text) .< 0.1 * y_range))
-            if overlap < min_overlap
-                min_overlap = overlap
-                best_pos = pos
+        if any(other_domain)
+            ρ = cor(shift[other_domain], j_ddf[other_domain])
+            ax[i].scatter(j_ddf[other_domain], shift[other_domain], alpha=0.7, s=15, color="lightgreen", marker="o", label="Other" * " (ρ=" * string(round(ρ, digits=2)) * ")")
+        end
+        for (n, (start, stop, label, color)) in enumerate(domains)
+            in_domain = (res_index_vec .>= start) .& (res_index_vec .<= stop)
+            ρ = cor(shift[in_domain], j_ddf[in_domain])
+            if any(in_domain)
+                ax[i].scatter(j_ddf[in_domain], shift[in_domain], alpha=0.7, s=15, color=color, marker=doms_marker[n], label=label * " (ρ=" * string(round(ρ, digits=2)) * ")")
             end
         end
 
-        ax[i].text(best_pos[1], best_pos[2], "ρ = " * string(round(ρ, digits=2)),
-            fontsize=12, transform=ax[i].transAxes,
-            verticalalignment=best_pos[3], horizontalalignment=best_pos[4])
+        ax[i].legend(loc="upper left", fontsize=11, frameon=true)
+        ax[i].set_title("$(cpair[1])-$(cpair[2])", fontsize=14)
 
     end
 
     fig.supylabel("Experimental fitness shift", fontsize=14, va="center")
-    fig.supxlabel("ΔΔϕ", fontsize=14, ha="center")
+    fig.supxlabel("Model prediction ΔΔϕ", fontsize=14, ha="center")
     fig.tight_layout()
 
     return fig, ax
@@ -128,8 +116,8 @@ clade_diff = CSV.read("results/clade_diff.csv", DataFrame)
 
 # Select Spike protein
 prot = "S"
-dfit_prot = delta_fit[delta_fit.prot.==prot, :]
-cdiff_prot = clade_diff[clade_diff.prot.==prot, :]
+dfit_prot = delta_fit[delta_fit.prot .== prot, :]
+cdiff_prot = clade_diff[clade_diff.prot .== prot, :]
 
 # Clade pairs to analyze
 cpairs = [("21L", "21K"), ("23A", "21L")]

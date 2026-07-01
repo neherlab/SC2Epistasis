@@ -11,6 +11,8 @@ Jtab = CSV.read("results/jcoup_l1_1em3_3d.csv", DataFrame)
 Jfrob = SC2Epistasis.frob_norm(Jtab)
 # Convert the Frobenius norm dictionary into an array
 Jmat = SC2Epistasis.Jmat(Jfrob)
+# Sort the couplings by Frobenius norm
+sort!(Jmat, by=x->x[2], rev=true)
 
 # Plot the coupling map
 fig, ax = plot_coup_map(Jmat; idx_max=400) # only plot top 400 couplings

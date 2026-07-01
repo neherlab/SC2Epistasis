@@ -25,15 +25,14 @@ function plot_jdfit!(axs_flat, jdfit_muts, background_states)
             unc = sqrt(sum(jdfit.s_fit[idx[k]] .^ 2) / sum(idx[k]))
             ax.errorbar(jdfit.J[idx[k]][1], av, yerr=unc, fmt="*", markersize=11, elinewidth=2.5, capsize=5, alpha=0.6)
             x_range = maximum(jdfit.J) - minimum(jdfit.J)
-            for (ci,c) in enumerate(eachindex(jdfit.clades[idx[k]]))
-                if jdfit.J[idx[k]][c]< -0.5
+            for (ci, c) in enumerate(eachindex(jdfit.clades[idx[k]]))
+                if jdfit.J[idx[k]][c] < -0.5
                     x_offset = 0.03 * x_range
                 elseif jdfit.J[idx[k]][c] > 0.5
                     x_offset = -0.12 * x_range
                 else
-                    x_offset = ci%2==0 ? 0.03 * x_range  : -0.12 * x_range
+                    x_offset = ci%2==0 ? 0.03 * x_range : -0.12 * x_range
                 end
-                # x_offset = (jdfit.J[idx[k]][c] < mean(jdfit.J)) ? 0.03 * x_range : -0.12 * x_range
                 push!(texts, ax.text(jdfit.J[idx[k]][c] + x_offset, jdfit.fit[idx[k]][c],
                     jdfit.clades[idx[k]][c], fontsize=10))
             end
@@ -70,7 +69,7 @@ function merge_dms_dfit(dms_shift::DataFrame, dfit::DataFrame, clade_pair::Tuple
     end
     rename!(dfit_c1c2, :aa_mut => :mutation)
     df_merge = innerjoin(dms_shift, dfit_c1c2, on=:mutation)
-    df_merge = df_merge[(df_merge.exp_count1.>=cnt_thr1).&(df_merge.exp_count2.>=cnt_thr2), :]
+    df_merge = df_merge[(df_merge.exp_count1 .>= cnt_thr1) .& (df_merge.exp_count2 .>= cnt_thr2), :]
     return df_merge
 
 end
@@ -87,9 +86,9 @@ function plot_shift!(ax, dms_shift::DataFrame, Jtab::DataFrame,
     shift_dfit = merge_dms_dfit(dms_shift, dfit_prot, clade_pair; cnt_thr1=cnt_thr1, cnt_thr2=cnt_thr2)
 
     muts = shift_dfit.mutation
-    res_index_vec = parse.(Int, map(x -> x[2:end-1], muts))
+    res_index_vec = parse.(Int, map(x -> x[2:(end-1)], muts))
     j_ddf = SC2Epistasis.mutcp_ddf(Jtab, muts, cdiff_prot, clade_pair[1], clade_pair[2])
-    shift = shift_dfit[!, "score_" * clade_pair[1]] .- shift_dfit[!, "score_" * clade_pair[2]]
+    shift = shift_dfit[!, "score_"*clade_pair[1]] .- shift_dfit[!, "score_"*clade_pair[2]]
 
     domains = [(doms_edges[n][1], doms_edges[n][end], doms_label[n], doms_col[n]) for n in eachindex(doms_label)]
     domain_masks = [(res_index_vec .>= start) .& (res_index_vec .<= stop) for (start, stop, _, _) in domains]
@@ -107,36 +106,6 @@ function plot_shift!(ax, dms_shift::DataFrame, Jtab::DataFrame,
         end
     end
 
-    # Correlation annotation: find position with least overlap
-    xlim_vals = ax.get_xlim()
-    ylim_vals = ax.get_ylim()
-    x_range = xlim_vals[2] - xlim_vals[1]
-    y_range = ylim_vals[2] - ylim_vals[1]
-    positions = [(0.05, 0.95, "top", "left"), (0.95, 0.95, "top", "right"),
-                 (0.05, 0.05, "bottom", "left"), (0.95, 0.05, "bottom", "right")]
-    best_pos = positions[1]
-    min_overlap = Inf
-    for pos in positions
-        x_text = xlim_vals[1] + pos[1] * x_range
-        y_text = ylim_vals[1] + pos[2] * y_range
-        overlap = sum((abs.(j_ddf .- x_text) .< 0.1 * x_range) .& (abs.(shift .- y_text) .< 0.1 * y_range))
-        if overlap < min_overlap
-            min_overlap = overlap
-            best_pos = pos
-        end
-    end
-    # ax.text(best_pos[1], best_pos[2], "ρ = " * string(round(ρ, digits=2)),
-    #     fontsize=12, transform=ax.transAxes,
-    #     verticalalignment=best_pos[3], horizontalalignment=best_pos[4])
-
-    # legend_handles = [mpatches.Patch(color=color, label=label) for (_, _, label, color) in domains]
-    # legend_entries = [label for (_, _, label, _) in domains]
-    # if any(other_domain)
-    #     push!(legend_handles, mpatches.Patch(color="lightgreen", label="Other"))
-    #     push!(legend_entries, "Other")
-    # end
-    # ax.legend(legend_handles, legend_entries, title="Domain", fontsize=10, title_fontsize=11,
-    #     loc="upper left", bbox_to_anchor=(1.02, 1.0), borderaxespad=0.0, frameon=true)
     ax.legend(loc="upper left", fontsize=11, frameon=true)
 
     ax.set_xlabel("Model prediction ΔΔϕ", fontsize=14)
@@ -155,8 +124,8 @@ delta_fit = CSV.read("results/delta_fit.csv", DataFrame)
 clade_diff = CSV.read("results/clade_diff.csv", DataFrame)
 
 prot = "S"
-dfit_prot = delta_fit[delta_fit.prot.==prot, :]
-cdiff_prot = clade_diff[clade_diff.prot.==prot, :]
+dfit_prot = delta_fit[delta_fit.prot .== prot, :]
+cdiff_prot = clade_diff[clade_diff.prot .== prot, :]
 
 # Panel A
 muts_list = ["R21G", "P384L", "P499L", "R683Q"]
@@ -189,7 +158,7 @@ plot_hist!(ax_B, z_df.av_z, z_df.av_dz)
 plot_shift!(ax_C, dms_shift, Jtab, dfit_prot, cdiff_prot, cpair)
 
 # Super-labels for A
-fig.text(0.38, 0.01, L"Coupling $J_{ij}$", ha="center", fontsize=16)
+fig.text(0.38, 0.01, L"Interaction parameters $J_{ij}$", ha="center", fontsize=16)
 fig.text(0.05, 0.5, L"Mutation $\Delta f_i$", va="center", rotation="vertical", fontsize=16)
 
 # Panel labels

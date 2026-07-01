@@ -75,7 +75,7 @@ function plot_coup_map_on_ax(fig, ax, Jmat::Vector{Vector{Union{Float64,Vector{I
 
     idx_i = [Jmat[k][1][1] for k in idx_max:-1:1]
     idx_j = [Jmat[k][1][2] for k in idx_max:-1:1]
-    Jval  = [Jmat[k][2]    for k in idx_max:-1:1]
+    Jval = [Jmat[k][2] for k in idx_max:-1:1]
 
     domains = [(doms_edges[n][1], doms_edges[n][end], doms_label[n], doms_col[n]) for n in eachindex(doms_label)]
 
@@ -87,12 +87,12 @@ function plot_coup_map_on_ax(fig, ax, Jmat::Vector{Vector{Union{Float64,Vector{I
     pc = ax.scatter(idx_i, idx_j, c=log.(Jval), s=70*max.(0.1, log.(Jval)) + 5.0*ones(length(Jval)), alpha=0.6, cmap=cmap)
     ax.set_xlim([1, L + 12])
     ax.set_ylim([1, L + 12])
-    ax.set_xlabel("Mutated residue i", fontsize=12, labelpad=50)
-    ax.set_ylabel("Background residue j", fontsize=12, labelpad=50)
-    ax.tick_params(axis="both", labelsize=10)
+    ax.set_xlabel("Mutated residue i", fontsize=14, labelpad=50)
+    ax.set_ylabel("Background residue j", fontsize=14, labelpad=50)
+    ax.tick_params(axis="both", labelsize=12)
     cbar = fig.colorbar(pc, ax=ax)
-    cbar.set_label(L"\log J_{ij}", fontsize=12)
-    cbar.ax.tick_params(labelsize=10)
+    cbar.set_label(L"\log J_{ij}", fontsize=14)
+    cbar.ax.tick_params(labelsize=12)
 
     x_bottom = -(box_height + 0.002)
 
@@ -163,9 +163,9 @@ end
 # ---------------------------------------------------------------------------
 
 rename!(fit_merge, [:delta_fitness => :fit1, :delta_fitness_1 => :fit2,
-                    :uncertainty => :std_fit1, :uncertainty_1 => :std_fit2])
+    :uncertainty => :std_fit1, :uncertainty_1 => :std_fit2])
 z_country = SC2Epistasis.z_dfit(fit_merge)
-z_clades  = SC2Epistasis.z_dfit(delta_fit_prot)
+z_clades = SC2Epistasis.z_dfit(delta_fit_prot)
 
 # ---------------------------------------------------------------------------
 # Compute panel B data (model inference energy vs λ)
@@ -178,7 +178,7 @@ dist = SC2Epistasis.threedist(optx, data, af_pdb)
 
 λ1 = [1.0e-6, 1.0e-5, 5.0e-5, 1.0e-4, 5.0e-4, 1.0e-3, 5.0e-3, 1.0e-2, 5.0e-2]
 fit_df_unif = optimize_unif(λ1, optx, qform; epsconv=1.0e-10)
-fit_df_3d   = optimize_3d_lin(λ1, data, optx, qform, dist; epsconv=1.0e-10)
+fit_df_3d = optimize_3d_lin(λ1, data, optx, qform, dist; epsconv=1.0e-10)
 
 # ---------------------------------------------------------------------------
 # Load coupling parameters for panels C and D
@@ -187,6 +187,7 @@ fit_df_3d   = optimize_3d_lin(λ1, data, optx, qform, dist; epsconv=1.0e-10)
 Jtab = CSV.read("results/jcoup_nprot_l1_1em3_3d.csv", DataFrame)
 Jfrob = SC2Epistasis.frob_norm(Jtab)
 Jmat_data = SC2Epistasis.Jmat(Jfrob)
+sort!(Jmat_data, by=x->x[2], rev=true) # sort by J value
 
 # ---------------------------------------------------------------------------
 # Build composite figure
@@ -201,9 +202,9 @@ ax_A.hist(z_clades, bins=40, density=true, alpha=0.8, label="Clades", edgecolor=
 ax_A.hist(z_country, bins=20, density=true, alpha=0.6, label="USA-UK", edgecolor="black")
 ax_A.legend(fontsize=11)
 ax_A.set_yscale("log")
-ax_A.set_ylabel("Density", fontsize=12)
-ax_A.set_xlabel("Fitness z-score", fontsize=12)
-ax_A.tick_params(axis="both", labelsize=10)
+ax_A.set_ylabel("Density", fontsize=14)
+ax_A.set_xlabel("Fitness z-score", fontsize=14)
+ax_A.tick_params(axis="both", labelsize=12)
 
 # Panel B — energy vs regularization
 labels_B = ["Uniform", "3d"]
@@ -215,17 +216,17 @@ for (n, fit_df) in enumerate([fit_df_unif, fit_df_3d])
 end
 ax_B.hlines(e0, fit_df_3d.l1[1], fit_df_3d.l1[end], color="black", linestyle="-", label="Estimated noise")
 ax_B.set_xscale("log")
-ax_B.set_xlabel("λ₁ (Sparsity Regularization)", fontsize=12)
-ax_B.set_ylabel("Energy (Mean Squared Error)", fontsize=12)
-ax_B.legend(loc="best", fontsize=10)
-ax_B.tick_params(axis="both", labelsize=10)
+ax_B.set_xlabel("Regularization strength λ₁", fontsize=14)
+ax_B.set_ylabel("Model MSE", fontsize=14)
+ax_B.legend(loc="best", fontsize=12)
+ax_B.tick_params(axis="both", labelsize=12)
 
 # Panel C — histogram of coupling parameters
 ax_C.hist(Jtab.J, bins=21, density=false, alpha=0.8, edgecolor="black")
 ax_C.set_yscale("log")
-ax_C.set_xlabel("Coupling parameters " * L"J_{ij}(σᵢ,σⱼ)", fontsize=12)
-ax_C.set_ylabel("Frequency", fontsize=12)
-ax_C.tick_params(axis="both", labelsize=10)
+ax_C.set_xlabel("Interaction parameters " * L"J_{ij}(σᵢ,σⱼ)", fontsize=14)
+ax_C.set_ylabel("Frequency", fontsize=14)
+ax_C.tick_params(axis="both", labelsize=12)
 
 # Panel D — coupling map
 plot_coup_map_on_ax(fig, ax_D, Jmat_data;

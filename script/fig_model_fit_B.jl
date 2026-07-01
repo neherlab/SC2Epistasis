@@ -59,7 +59,7 @@ files = readdir(path_model_fit, join=true) # list of files in the folder
 fit_df_vec = [DataFrame(CSV.File(f)) for f in files]; # vector of dataframes
 
 # Compute baseline noise level
-include("script/usa_uk_ener.jl") # e0^base is defined here
+include("usa_uk_ener.jl") # e0^base is defined here
 
 # Plot model fits
 fig, ax = plot_model_fit(fit_df_vec[[3, 1, 2]], e0); # re-order to match legend

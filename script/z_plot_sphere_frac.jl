@@ -46,7 +46,7 @@ function plot_sphere_frac(cp_plt::Vector{Tuple{S1,S1}}, frac::Vector{Matrix{Floa
 
     if standalone
         fig.tight_layout(rect=(0.02, 0.025, 0.87, 0.98))
-        fig.text(0.92, 0.5, "Fraction of " * L"i\;" * "s.t. " * L"\exists j:\:d(i,j) < d_{thr}", va="center", rotation="vertical", fontsize=16)
+        fig.text(0.92, 0.5, "Fraction of " * L"i\;" * "s.t. " * L"\exists j:\:d(i,j) < r", va="center", rotation="vertical", fontsize=16)
     end
 
     # bottom x-axis
@@ -102,7 +102,7 @@ function plot_sphere_frac_vs_z(cp_plt::Vector{Tuple{S1,S1}}, frac_z::Vector{Matr
 
     if standalone
         fig.tight_layout(rect=(0.02, 0.025, 0.87, 0.98))
-        fig.text(0.92, 0.5, "Fraction of " * L"i\;" * "s.t. " * L"\exists j:\:d(i,j) < d_{thr}", va="center", rotation="vertical", fontsize=16)
+        fig.text(0.92, 0.5, "Fraction of " * L"i\;" * "s.t. " * L"\exists j:\:d(i,j) < r", va="center", rotation="vertical", fontsize=16)
     end
     axs[end].set_xlabel("z-score threshold", fontsize=16)
     axs[end].tick_params(axis="x", labelsize=11)

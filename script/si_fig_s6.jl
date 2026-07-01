@@ -3,26 +3,12 @@
 # Import packages
 using DataFrames, CSV, PyPlot, PyCall, Statistics
 @pyimport adjustText
+@isdefined(mpatches) || (const mpatches = PyPlot.PyCall.pyimport("matplotlib.patches"))
 
-function plot_jdfit(jdfit_muts::Vector{Any};
-    nrows::Int=2,
-    ncols::Int=2,
-    xsize::Float64=6.0,
-    ysize::Float64=8.0,
-    wspace::Float64=-0.3,
-    hspace::Float64=0.15,
-    left::Float64=0.02,
-    right::Float64=0.98,
-    top::Float64=0.97,
-    bottom::Float64=0.08,
-    x_supy::Float64=0.01,
-    y_supx::Float64=0.07)
-
-    @assert nrows * ncols == length(jdfit_muts)
-    fig, ax = subplots(nrows, ncols, figsize=(xsize * ncols, ysize * nrows))
+function plot_jdfit!(axs_flat, jdfit_muts, background_states)
 
     for n in eachindex(jdfit_muts)
-
+        ax = axs_flat[n]
         jdfit = jdfit_muts[n]
         n_c = length(jdfit.clades)
         aa = unique(jdfit.sj)
@@ -31,38 +17,32 @@ function plot_jdfit(jdfit_muts::Vector{Any};
         texts = PyObject[]
         for k in 1:n_aa
             idx[k] .= (jdfit.sj .== aa[k])
-            ax[n].scatter(jdfit.J[idx[k]], jdfit.fit[idx[k]])
+            ax.scatter(jdfit.J[idx[k]], jdfit.fit[idx[k]])
             av = mean(jdfit.fit[idx[k]])
             unc = sqrt(sum(jdfit.s_fit[idx[k]] .^ 2) / sum(idx[k]))
-            ax[n].errorbar(jdfit.J[idx[k]][1], av, yerr=unc, fmt="*", markersize=11, elinewidth=2.5, capsize=5, alpha=0.6)
-
-            # Add initial horizontal offset based on position
+            ax.errorbar(jdfit.J[idx[k]][1], av, yerr=unc, fmt="*", markersize=11, elinewidth=2.5, capsize=5, alpha=0.6)
             x_range = maximum(jdfit.J) - minimum(jdfit.J)
-            for c in eachindex(jdfit.clades[idx[k]])
-                # Determine offset direction: right if on left half, left if on right half
-                x_offset = (jdfit.J[idx[k]][c] < mean(jdfit.J)) ? 0.08 * x_range : -0.08 * x_range
-                push!(texts, ax[n].text(jdfit.J[idx[k]][c] + x_offset, jdfit.fit[idx[k]][c],
+            for (ci, c) in enumerate(eachindex(jdfit.clades[idx[k]]))
+                if jdfit.J[idx[k]][c] < -0.5
+                    x_offset = 0.03 * x_range
+                elseif jdfit.J[idx[k]][c] > 0.5
+                    x_offset = -0.12 * x_range
+                else
+                    x_offset = ci%2==0 ? 0.03 * x_range : -0.12 * x_range
+                end
+                push!(texts, ax.text(jdfit.J[idx[k]][c] + x_offset, jdfit.fit[idx[k]][c],
                     jdfit.clades[idx[k]][c], fontsize=10))
             end
         end
-        # Call adjust_text separately for each subplot with stronger repulsion
-        adjustText.adjust_text(texts, ax=ax[n], only_move=Dict("text" => "xy", "points" => ""),
-            force_text=(0.8, 0.8), force_points=(1.5, 1.5),
-            expand_text=(1.5, 1.5), expand_points=(2.0, 2.0))
-        ax[n].set_box_aspect(4 / 3)
-        ax[n].set_xlabel("i=$(jdfit.i) " * ", j=$(jdfit.j)", fontsize=14)
-        ax[n].set_ylabel("Δf($(jdfit.si_wt) → $(jdfit.si))", fontsize=14)
-        ax[n].tick_params(labelsize=12)
-
+        adjustText.adjust_text(texts, ax=ax, only_move=Dict("text" => "xy", "points" => ""),
+            force_text=(0.2, 1.2), force_points=(0.5, 0.8),
+            expand_text=(1.2, 1.2), expand_points=(2.0, 2.0))
+        ax.set_box_aspect(3 / 3)
+        states_str = join(background_states[n], ",")
+        ax.set_xlabel("i=$(jdfit.i), j=$(jdfit.j),  \$\\sigma_j = $(states_str)\$", fontsize=14)
+        ax.set_ylabel("Δf($(jdfit.si_wt) → $(jdfit.si))", fontsize=14)
+        ax.tick_params(labelsize=12)
     end
-
-    # Minimize white space between subplots
-    fig.subplots_adjust(wspace=wspace, hspace=hspace, left=left, right=right, top=top, bottom=bottom)
-
-    fig.supxlabel("Coupling J", fontsize=16, ha="center", y=x_supy)
-    fig.supylabel("Mutation Δf", fontsize=16, va="center", x=y_supx)
-
-    return fig, ax
 
 end
 
@@ -78,8 +58,8 @@ clade_diff = CSV.read("results/clade_diff.csv", DataFrame)
 
 # Select protein
 prot = "S"
-dfit_prot = delta_fit[delta_fit.prot.==prot, :]
-cdiff_prot = clade_diff[clade_diff.prot.==prot, :]
+dfit_prot = delta_fit[delta_fit.prot .== prot, :]
+cdiff_prot = clade_diff[clade_diff.prot .== prot, :]
 
 # List of mutations to be plotted
 muts_list = ["I68V", "P139S", "A419S", "S1003I"]
@@ -89,7 +69,25 @@ int_res = [69, 83, 417, 764]
 # Compute structs for plotting
 jdfit_muts = SC2Epistasis.coup_dfit(Jtab, dfit_prot, cdiff_prot, muts_list, int_res)
 
+# List of mismatches between group of clades
+background_states = [["-", "H"], ["V", "A"], ["N", "K"], ["N", "K"]]
+
 # Make the plots
-fig, ax = plot_jdfit(jdfit_muts; nrows=2, ncols=2, wspace=-0.2, hspace=0.15, left=0.02, right=0.98, y_supx=0.02)
+
+# Initialize figure and axes
+fig, ax = subplots(2, 2, figsize=(10, 10))
+ax_flat = vec(ax)
+
+# Plot the data on the axes
+plot_jdfit!(ax_flat, jdfit_muts, background_states)
+
+# Super-labels for figure
+fig.text(0.5, 0.01, L"Interaction parameters $J_{ij}$", ha="center", fontsize=16)
+fig.text(0.02, 0.5, L"Mutation $\Delta f_i$", va="center", rotation="vertical", fontsize=16)
+
+# Tight layout
+fig.tight_layout(rect=[0.04, 0.03, 0.98, 0.98])
+
+# Save and close the figure
 fig.savefig("results/figures/si/fig_s6.pdf")
 close(fig)
